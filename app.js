@@ -4,8 +4,16 @@
 if (typeof document === 'undefined' || typeof window === 'undefined') {
     console.log('Not in browser environment, exiting initialization');
 } else {
-    // Initialize the application (no need to load dependencies, handled by Vite)
-    initializeApplication();
+    // Don't use THREE here yet, wait for initialization
+    setTimeout(() => {
+        // This small delay ensures THREE is globally available
+        if (window.THREE) {
+            console.log("THREE is available, initializing application");
+            initializeApplication();
+        } else {
+            console.error("THREE is not defined, cannot initialize application");
+        }
+    }, 100);
 }
 
 // Wrap the entire application in a function that will be called after loading dependencies
