@@ -8,9 +8,21 @@ window.applyToSelectedMaterial = function() { console.log('Function not loaded y
 window.loadExample = function() { console.log('Function not loaded yet'); };
 window.toggleNotepad = function() { console.log('Function not loaded yet'); };
 window.toggleOptimizer = function() { console.log('Function not loaded yet'); };
+window.loadSampleModel = function() { console.log('Function not loaded yet'); };
+window.clearModel = function() { console.log('Function not loaded yet'); };
+window.updateShaders = function() { console.log('Function not loaded yet'); };
+window.toggleAnimation = function() { console.log('Function not loaded yet'); };
+window.resetTransform = function() { console.log('Function not loaded yet'); };
+window.centerModel = function() { console.log('Function not loaded yet'); };
+window.exportModel = function() { console.log('Function not loaded yet'); };
+window.exportScreenshot = function() { console.log('Function not loaded yet'); };
+window.toggleWireframe = function() { console.log('Function not loaded yet'); };
+window.toggleDebugMode = function() { console.log('Function not loaded yet'); };
+window.resetSelectedMaterial = function() { console.log('Function not loaded yet'); };
 
 // Load Three.js and dependencies at the start
 (function loadDependencies() {
+    // We're going back to using non-ESM version because it's easier to integrate with the existing code
     // Helper function to load scripts in sequence
     function loadScript(url, callback) {
         const script = document.createElement('script');
@@ -19,16 +31,16 @@ window.toggleOptimizer = function() { console.log('Function not loaded yet'); };
         document.head.appendChild(script);
     }
 
-    // Load Three.js first (using ESM compatible version)
-    loadScript('https://cdn.skypack.dev/three@0.151.3', function() {
+    // Load Three.js first
+    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.js', function() {
         // Then load GLTFLoader
-        loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/loaders/GLTFLoader.js', function() {
+        loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/GLTFLoader.js', function() {
             // Then load DRACOLoader
-            loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/loaders/DRACOLoader.js', function() {
+            loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/DRACOLoader.js', function() {
                 // Then load OrbitControls
-                loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/controls/OrbitControls.js', function() {
+                loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/controls/OrbitControls.js', function() {
                     // Then load GLTFExporter
-                    loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/exporters/GLTFExporter.js', function() {
+                    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/exporters/GLTFExporter.js', function() {
                         // Initialize the application once all dependencies are loaded
                         initializeApplication();
                     });
@@ -3972,5 +3984,16 @@ window.applyToSelectedMaterial = applyToSelectedMaterial;
 window.loadExample = loadExample;
 window.toggleNotepad = toggleNotepad;
 window.toggleOptimizer = toggleOptimizer;
+window.loadSampleModel = loadSampleModel;
+window.clearModel = clearModel;
+window.updateShaders = updateShaders;
+window.toggleAnimation = toggleAnimation;
+window.resetTransform = resetTransform;
+window.centerModel = centerModel;
+window.exportModel = exportModel;
+window.exportScreenshot = exportScreenshot;
+window.toggleWireframe = toggleWireframe;
+window.toggleDebugMode = toggleDebugMode;
+window.resetSelectedMaterial = resetSelectedMaterial;
 
 } // End of initializeApplication()
