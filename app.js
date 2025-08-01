@@ -1,25 +1,5 @@
 // Three.js glTF Shader Studio - Enhanced Application
 
-// Define global functions needed by HTML before they're implemented
-window.toggleShaderBrowser = function() { console.log('Function not loaded yet'); };
-window.clearShaders = function() { console.log('Function not loaded yet'); };
-window.resetView = function() { console.log('Function not loaded yet'); };
-window.applyToSelectedMaterial = function() { console.log('Function not loaded yet'); };
-window.loadExample = function() { console.log('Function not loaded yet'); };
-window.toggleNotepad = function() { console.log('Function not loaded yet'); };
-window.toggleOptimizer = function() { console.log('Function not loaded yet'); };
-window.loadSampleModel = function() { console.log('Function not loaded yet'); };
-window.clearModel = function() { console.log('Function not loaded yet'); };
-window.updateShaders = function() { console.log('Function not loaded yet'); };
-window.toggleAnimation = function() { console.log('Function not loaded yet'); };
-window.resetTransform = function() { console.log('Function not loaded yet'); };
-window.centerModel = function() { console.log('Function not loaded yet'); };
-window.exportModel = function() { console.log('Function not loaded yet'); };
-window.exportScreenshot = function() { console.log('Function not loaded yet'); };
-window.toggleWireframe = function() { console.log('Function not loaded yet'); };
-window.toggleDebugMode = function() { console.log('Function not loaded yet'); };
-window.resetSelectedMaterial = function() { console.log('Function not loaded yet'); };
-
 // Load Three.js and dependencies at the start
 (function loadDependencies() {
     // We're going back to using non-ESM version because it's easier to integrate with the existing code
