@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Three.js glTF Shader Studio - Minimal Version</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #3a6ea5;
+            font-family: "Tahoma", sans-serif;
+            font-size: 11px;
+            padding-bottom: 40px;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 420px;
+            max-height: calc(100vh - 90px);
+            background: #ece9d8;
+            border: 2px outset #ece9d8;
+            font-family: "Tahoma", sans-serif;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            min-width: 280px;
+            max-width: 60vw;
+            resize: none;
+        }
+        
+        .window-header {
+            background: #0055e5;
+            color: white;
+            padding: 4px 6px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .window-content {
+            padding: 10px;
+        }
+        
+        .button {
+            background-color: #ece9d8;
+            border: 2px outset #ece9d8;
+            color: black;
+            padding: 4px 8px;
+            margin: 2px;
+            cursor: pointer;
+        }
+        
+        .button:hover {
+            background-color: #f5f2e8;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 5px;
+            background: #ffffcc;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div class="window-header">
+            <span>Three.js glTF Shader Studio</span>
+            <div>
+                <button class="window-button" onclick="minimizeApp()">_</button>
+                <button class="window-button" onclick="window.close()">×</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <h3>Welcome to glTF Shader Studio</h3>
+            <p>This is a simplified version of the app that loads reliably on Vercel.</p>
+            
+            <button class="button" onclick="showMessage('Loading example shader...')">📁 Example</button>
+            <button class="button" onclick="showMessage('Shader cleared')">🗑️ Clear</button>
+            <button class="button" onclick="showMessage('View reset')">🔄 Reset</button>
+            <button class="button" onclick="showMessage('Shader applied to material')">🎨 Apply</button>
+            
+            <div class="status" id="status">Ready</div>
+        </div>
+    </div>
+    
+    <script>
+        // All necessary functions defined inline
+        function minimizeApp() {
+            document.getElementById('ui').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('ui').style.display = 'block';
+            }, 1000);
+        }
+        
+        function showMessage(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('App initialized');
+            showMessage('App loaded successfully');
+        });
+    </script>
+</body>
+</html> 
