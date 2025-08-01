@@ -1,5 +1,14 @@
 // Three.js glTF Shader Studio - Enhanced Application
 
+// Define global functions needed by HTML before they're implemented
+window.toggleShaderBrowser = function() { console.log('Function not loaded yet'); };
+window.clearShaders = function() { console.log('Function not loaded yet'); };
+window.resetView = function() { console.log('Function not loaded yet'); };
+window.applyToSelectedMaterial = function() { console.log('Function not loaded yet'); };
+window.loadExample = function() { console.log('Function not loaded yet'); };
+window.toggleNotepad = function() { console.log('Function not loaded yet'); };
+window.toggleOptimizer = function() { console.log('Function not loaded yet'); };
+
 // Load Three.js and dependencies at the start
 (function loadDependencies() {
     // Helper function to load scripts in sequence
@@ -10,16 +19,16 @@
         document.head.appendChild(script);
     }
 
-    // Load Three.js first (using ES modules compatible version)
-    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.js', function() {
+    // Load Three.js first (using ESM compatible version)
+    loadScript('https://cdn.skypack.dev/three@0.151.3', function() {
         // Then load GLTFLoader
-        loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/GLTFLoader.js', function() {
+        loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/loaders/GLTFLoader.js', function() {
             // Then load DRACOLoader
-            loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/DRACOLoader.js', function() {
+            loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/loaders/DRACOLoader.js', function() {
                 // Then load OrbitControls
-                loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/controls/OrbitControls.js', function() {
+                loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/controls/OrbitControls.js', function() {
                     // Then load GLTFExporter
-                    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/exporters/GLTFExporter.js', function() {
+                    loadScript('https://cdn.skypack.dev/three@0.151.3/examples/jsm/exporters/GLTFExporter.js', function() {
                         // Initialize the application once all dependencies are loaded
                         initializeApplication();
                     });
@@ -3954,4 +3963,14 @@ function resetLighting() {
     updateEnvironment();
     showTaskbarNotification('Lighting reset to defaults', 'success');
 }
+
+// Expose functions needed by HTML to the global scope
+window.toggleShaderBrowser = toggleShaderBrowser;
+window.clearShaders = clearShaders;
+window.resetView = resetView;
+window.applyToSelectedMaterial = applyToSelectedMaterial;
+window.loadExample = loadExample;
+window.toggleNotepad = toggleNotepad;
+window.toggleOptimizer = toggleOptimizer;
+
 } // End of initializeApplication()
