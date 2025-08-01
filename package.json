@@ -1,0 +1,17 @@
+{
+  "name": "gltf-shader-studio",
+  "version": "1.0.0",
+  "description": "Three.js glTF Shader Studio with cel shading and cartoon outline shaders",
+  "scripts": {
+    "dev": "http-server -c-1 -p 3000",
+    "build": "echo 'No build step required'",
+    "start": "http-server -c-1 -p $PORT"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1",
+    "three": "^0.151.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 
