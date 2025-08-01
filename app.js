@@ -38,30 +38,48 @@ let originalModelStats = null;
 let optimizationInProgress = false;
 
 // Shader Browser variables
-// Using global variables declared earlier
+let selectedShader = null;
+let filteredShaders = [];
+let currentFilter = '';
 
 // Start Menu variables
 let startMenuOpen = false;
-let recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
-let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-let userSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+let recentFiles = [];
+let bookmarks = [];
+let userSettings = {};
+
+// Try to load settings from localStorage if available
+try {
+  if (typeof localStorage !== 'undefined') {
+    recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+    bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    userSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+  }
+} catch (e) {
+  console.warn('Error accessing localStorage:', e);
+}
 
 // UI Elements - Shader Panel
-const vertexTextarea = document.getElementById("vertexShader");
-const fragmentTextarea = document.getElementById("fragmentShader");
-const statusElement = document.getElementById("status");
-const vertexError = document.getElementById("vertexError");
-const fragmentError = document.getElementById("fragmentError");
+let vertexTextarea, fragmentTextarea, statusElement, vertexError, fragmentError;
+try {
+  vertexTextarea = document.getElementById("vertexShader");
+  fragmentTextarea = document.getElementById("fragmentShader");
+  statusElement = document.getElementById("status");
+  vertexError = document.getElementById("vertexError");
+  fragmentError = document.getElementById("fragmentError");
+} catch (e) {
+  console.warn('Error accessing DOM elements:', e);
+}
 
 // UI Elements - glTF Panel
-const gltfFileInput = document.getElementById("gltfFileInput");
-const modelInfo = document.getElementById("modelInfo");
-const gltfStatus = document.getElementById("gltfStatus");
-
-// Shader browser variables
-selectedShader = null;
-filteredShaders = [];
-currentFilter = '';
+let gltfFileInput, modelInfo, gltfStatus;
+try {
+  gltfFileInput = document.getElementById("gltfFileInput");
+  modelInfo = document.getElementById("modelInfo");
+  gltfStatus = document.getElementById("gltfStatus");
+} catch (e) {
+  console.warn('Error accessing glTF DOM elements:', e);
+}
 
 // Lighting variables
 // Using global variables already declared
