@@ -1,256 +1,281 @@
-// This file contains ALL global functions needed by HTML elements
-// It's loaded before app.js to ensure the functions are defined
+// Check if we're in a browser environment before accessing document or window
+if (typeof document === 'undefined' || typeof window === 'undefined') {
+    console.log('Not in browser environment, skipping globals initialization');
+} else {
+    // This file contains ALL global functions needed by HTML elements
+    // It's loaded before app.js to ensure the functions are defined
 
-// Basic UI functions
-window.toggleSection = function(element) { 
-    console.log('Toggling section...'); 
-    if (element) {
+    // Basic UI functions
+    window.toggleSection = function(element) {
+        if (!element) return;
         const content = element.nextElementSibling;
-        if (content) {
-            content.style.display = content.style.display === 'none' ? 'block' : 'none';
-            element.classList.toggle('collapsed');
+        if (!content) return;
+        
+        if (content.style.display === "none" || !content.style.display) {
+            content.style.display = "block";
+            if (element.querySelector('.section-arrow')) {
+                element.querySelector('.section-arrow').innerHTML = '▼';
+            }
+        } else {
+            content.style.display = "none";
+            if (element.querySelector('.section-arrow')) {
+                element.querySelector('.section-arrow').innerHTML = '▶';
+            }
         }
-    }
-};
+    };
 
-window.switchShaderTab = function(tab) { 
-    console.log('Switching to tab: ' + tab); 
-    const tabs = document.querySelectorAll('.panel-tab');
-    tabs.forEach(t => t.classList.remove('active'));
-    document.querySelector(`.panel-tab:nth-child(${tab === 'vertex' ? 1 : tab === 'fragment' ? 2 : 3})`).classList.add('active');
-};
+    window.switchShaderTab = function(tab) {
+        const tabButtons = document.querySelectorAll('.shader-tab-button');
+        const tabPanels = document.querySelectorAll('.shader-tab');
+        
+        if (!tabButtons || !tabPanels) return;
+        
+        tabButtons.forEach(button => button.classList.remove('active'));
+        tabPanels.forEach(panel => panel.classList.remove('active'));
+        
+        document.getElementById(tab + '-button')?.classList.add('active');
+        document.getElementById(tab)?.classList.add('active');
+    };
 
-window.toggleExpand = function(editorId) { 
-    console.log('Expanding editor: ' + editorId); 
-};
+    window.toggleExpand = function(editorId) {
+        const editor = document.getElementById(editorId);
+        if (!editor) return;
+        
+        if (editor.classList.contains('expanded')) {
+            editor.classList.remove('expanded');
+            editor.style.height = '300px';
+        } else {
+            editor.classList.add('expanded');
+            editor.style.height = '500px';
+        }
+    };
 
-// Shader related functions
-window.clearShaders = function() { 
-    console.log('Clearing shaders...'); 
-    const vertexTextarea = document.getElementById('vertexShader');
-    const fragmentTextarea = document.getElementById('fragmentShader');
-    if (vertexTextarea) vertexTextarea.value = '';
-    if (fragmentTextarea) fragmentTextarea.value = '';
-};
+    // Shader related functions
+    window.clearShaders = function() {
+        console.log('placeholder: clearShaders');
+    };
 
-window.loadExample = function() { 
-    console.log('Loading example shader...'); 
-};
+    window.loadExample = function() {
+        console.log('placeholder: loadExample');
+    };
 
-window.loadSpecificExample = function(type) {
-    console.log('Loading specific example: ' + type);
-};
+    window.loadSpecificExample = function(type) {
+        console.log('placeholder: loadSpecificExample', type);
+    };
 
-window.updateShaders = function() { 
-    console.log('Updating shaders...'); 
-};
+    window.updateShaders = function() {
+        console.log('placeholder: updateShaders');
+    };
 
-window.applyToSelectedMaterial = function() { 
-    console.log('Applying to selected material...'); 
-};
+    window.applyToSelectedMaterial = function() {
+        console.log('placeholder: applyToSelectedMaterial');
+    };
 
-// Window functions
-window.toggleShaderBrowser = function() { 
-    console.log('Toggling shader browser...'); 
-    const shaderBrowser = document.getElementById('shader-browser');
-    if (shaderBrowser) {
-        shaderBrowser.style.display = shaderBrowser.style.display === 'none' ? 'block' : 'none';
-    }
-};
+    // Window functions
+    window.toggleShaderBrowser = function() {
+        const browser = document.getElementById('shader-browser');
+        if (browser) {
+            browser.style.display = browser.style.display === 'none' ? 'block' : 'none';
+        }
+    };
 
-window.toggleNotepad = function() { 
-    console.log('Toggling notepad...'); 
-    const notepad = document.getElementById('notepad');
-    if (notepad) {
-        notepad.style.display = notepad.style.display === 'none' ? 'block' : 'none';
-    }
-};
+    window.toggleNotepad = function() {
+        const notepad = document.getElementById('notepad');
+        if (notepad) {
+            notepad.style.display = notepad.style.display === 'none' ? 'block' : 'none';
+        }
+    };
 
-window.toggleOptimizer = function() { 
-    console.log('Toggling optimizer...'); 
-    const optimizer = document.getElementById('optimizer');
-    if (optimizer) {
-        optimizer.style.display = optimizer.style.display === 'none' ? 'block' : 'none';
-    }
-};
+    window.toggleOptimizer = function() {
+        const optimizer = document.getElementById('optimizer');
+        if (optimizer) {
+            optimizer.style.display = optimizer.style.display === 'none' ? 'block' : 'none';
+        }
+    };
 
-window.minimizeNotepad = function() {
-    console.log('Minimizing notepad');
-};
+    window.minimizeNotepad = function() {
+        const notepad = document.getElementById('notepad');
+        if (notepad) {
+            notepad.classList.add('minimized');
+        }
+    };
 
-window.closeNotepad = function() {
-    console.log('Closing notepad');
-    const notepad = document.getElementById('notepad');
-    if (notepad) notepad.style.display = 'none';
-};
+    window.closeNotepad = function() {
+        const notepad = document.getElementById('notepad');
+        if (notepad) {
+            notepad.style.display = 'none';
+        }
+    };
 
-window.minimizeOptimizer = function() {
-    console.log('Minimizing optimizer');
-};
+    window.minimizeOptimizer = function() {
+        const optimizer = document.getElementById('optimizer');
+        if (optimizer) {
+            optimizer.classList.add('minimized');
+        }
+    };
 
-window.closeOptimizer = function() {
-    console.log('Closing optimizer');
-    const optimizer = document.getElementById('optimizer');
-    if (optimizer) optimizer.style.display = 'none';
-};
+    window.closeOptimizer = function() {
+        const optimizer = document.getElementById('optimizer');
+        if (optimizer) {
+            optimizer.style.display = 'none';
+        }
+    };
 
-window.minimizeShaderBrowser = function() {
-    console.log('Minimizing shader browser');
-};
+    window.minimizeShaderBrowser = function() {
+        const browser = document.getElementById('shader-browser');
+        if (browser) {
+            browser.classList.add('minimized');
+        }
+    };
 
-window.closeShaderBrowser = function() {
-    console.log('Closing shader browser');
-    const shaderBrowser = document.getElementById('shader-browser');
-    if (shaderBrowser) shaderBrowser.style.display = 'none';
-};
+    window.closeShaderBrowser = function() {
+        const browser = document.getElementById('shader-browser');
+        if (browser) {
+            browser.style.display = 'none';
+        }
+    };
 
-window.toggleStartMenu = function() {
-    console.log('Toggling start menu');
-    const startMenu = document.getElementById('startMenu');
-    if (startMenu) {
-        startMenu.style.display = startMenu.style.display === 'none' ? 'block' : 'none';
-    }
-};
+    window.toggleStartMenu = function() {
+        const startMenu = document.getElementById('start-menu');
+        if (startMenu) {
+            startMenu.style.display = startMenu.style.display === 'none' ? 'block' : 'none';
+        }
+    };
 
-window.showSubMenu = function(submenuType) {
-    console.log('Showing submenu: ' + submenuType);
-};
+    window.showSubMenu = function(submenuType) {
+        console.log('placeholder: showSubMenu', submenuType);
+    };
 
-window.startAction = function(action) {
-    console.log('Starting action: ' + action);
-};
+    window.startAction = function(action) {
+        console.log('placeholder: startAction', action);
+    };
 
-window.minimizeApp = function() {
-    console.log('Minimizing app');
-};
+    window.minimizeApp = function() {
+        console.log('placeholder: minimizeApp');
+    };
 
-// Model functions
-window.loadSampleModel = function() { 
-    console.log('Loading sample model...'); 
-};
+    // Model functions
+    window.loadSampleModel = function() {
+        console.log('placeholder: loadSampleModel');
+    };
 
-window.clearModel = function() { 
-    console.log('Clearing model...'); 
-};
+    window.clearModel = function() {
+        console.log('placeholder: clearModel');
+    };
 
-window.resetView = function() { 
-    console.log('Resetting view...'); 
-};
+    window.resetView = function() {
+        console.log('placeholder: resetView');
+    };
 
-window.centerModel = function() { 
-    console.log('Centering model...'); 
-};
+    window.centerModel = function() {
+        console.log('placeholder: centerModel');
+    };
 
-window.setCameraView = function(view) {
-    console.log('Setting camera view: ' + view);
-};
+    window.setCameraView = function(view) {
+        console.log('placeholder: setCameraView', view);
+    };
 
-window.resetTransform = function() { 
-    console.log('Resetting transform...'); 
-};
+    window.resetTransform = function() {
+        console.log('placeholder: resetTransform');
+    };
 
-window.exportModel = function() { 
-    console.log('Exporting model...'); 
-};
+    window.exportModel = function() {
+        console.log('placeholder: exportModel');
+    };
 
-window.exportScreenshot = function() { 
-    console.log('Taking screenshot...'); 
-};
+    window.exportScreenshot = function() {
+        console.log('placeholder: exportScreenshot');
+    };
 
-window.exportOptimized = function() {
-    console.log('Exporting optimized model');
-};
+    window.exportOptimized = function() {
+        console.log('placeholder: exportOptimized');
+    };
 
-// Animation functions
-window.toggleAnimation = function() { 
-    console.log('Toggling animation...'); 
-};
+    // Animation functions
+    window.toggleAnimation = function() {
+        console.log('placeholder: toggleAnimation');
+    };
 
-window.stopAnimation = function() { 
-    console.log('Stopping animation...'); 
-};
+    window.stopAnimation = function() {
+        console.log('placeholder: stopAnimation');
+    };
 
-window.nextAnimation = function() { 
-    console.log('Next animation...'); 
-};
+    window.nextAnimation = function() {
+        console.log('placeholder: nextAnimation');
+    };
 
-// Material functions
-window.resetSelectedMaterial = function() { 
-    console.log('Resetting selected material...'); 
-};
+    // Material functions
+    window.resetSelectedMaterial = function() {
+        console.log('placeholder: resetSelectedMaterial');
+    };
 
-window.applyShaderToSelectedMaterial = function() { 
-    console.log('Applying shader to selected material...'); 
-};
+    window.applyShaderToSelectedMaterial = function() {
+        console.log('placeholder: applyShaderToSelectedMaterial');
+    };
 
-window.toggleWireframe = function() { 
-    console.log('Toggling wireframe...'); 
-};
+    window.toggleWireframe = function() {
+        console.log('placeholder: toggleWireframe');
+    };
 
-window.toggleDebugMode = function() { 
-    console.log('Toggling debug mode...'); 
-};
+    window.toggleDebugMode = function() {
+        console.log('placeholder: toggleDebugMode');
+    };
 
-// Notepad functions
-window.newNote = function() {
-    console.log('New note');
-};
+    // Notepad functions
+    window.newNote = function() {
+        console.log('placeholder: newNote');
+    };
 
-window.saveNote = function() {
-    console.log('Save note');
-};
+    window.saveNote = function() {
+        console.log('placeholder: saveNote');
+    };
 
-window.loadNote = function() {
-    console.log('Load note');
-};
+    window.loadNote = function() {
+        console.log('placeholder: loadNote');
+    };
 
-window.clearNote = function() {
-    console.log('Clear note');
-};
+    window.clearNote = function() {
+        console.log('placeholder: clearNote');
+    };
 
-// Lighting functions
-window.setLightingPreset = function(preset) {
-    console.log('Setting lighting preset: ' + preset);
-};
+    // Lighting functions
+    window.setLightingPreset = function(preset) {
+        console.log('placeholder: setLightingPreset', preset);
+    };
 
-window.resetLighting = function() {
-    console.log('Resetting lighting');
-};
+    window.resetLighting = function() {
+        console.log('placeholder: resetLighting');
+    };
 
-// Shader browser functions
-window.clearShaderSearch = function() {
-    console.log('Clearing shader search');
-    const searchInput = document.querySelector('.search-box');
-    if (searchInput) searchInput.value = '';
-};
+    // Shader browser functions
+    window.clearShaderSearch = function() {
+        console.log('placeholder: clearShaderSearch');
+    };
 
-window.filterByCategory = function(category) {
-    console.log('Filtering by category: ' + category);
-    const buttons = document.querySelectorAll('.filter-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    const activeButton = Array.from(buttons).find(btn => btn.textContent.toLowerCase().includes(category));
-    if (activeButton) activeButton.classList.add('active');
-};
+    window.filterByCategory = function(category) {
+        console.log('placeholder: filterByCategory', category);
+    };
 
-window.applySelectedShader = function() {
-    console.log('Applying selected shader');
-};
+    window.applySelectedShader = function() {
+        console.log('placeholder: applySelectedShader');
+    };
 
-window.previewShader = function() {
-    console.log('Previewing shader');
-};
+    window.previewShader = function() {
+        console.log('placeholder: previewShader');
+    };
 
-window.saveShaderVariant = function() {
-    console.log('Saving shader variant');
-};
+    window.saveShaderVariant = function() {
+        console.log('placeholder: saveShaderVariant');
+    };
 
-// Optimizer functions
-window.analyzeModel = function() {
-    console.log('Analyzing model');
-};
+    // Optimizer functions
+    window.analyzeModel = function() {
+        console.log('placeholder: analyzeModel');
+    };
 
-window.optimizeModel = function() {
-    console.log('Optimizing model');
-};
+    window.optimizeModel = function() {
+        console.log('placeholder: optimizeModel');
+    };
 
-console.log('Global functions initialized'); 
+    console.log('Global functions initialized');
+} 
