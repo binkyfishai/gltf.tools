@@ -1,4 +1,36 @@
 // Three.js glTF Shader Studio - Enhanced Application
+
+// Load Three.js and dependencies at the start
+(function loadDependencies() {
+    // Helper function to load scripts in sequence
+    function loadScript(url, callback) {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = callback;
+        document.head.appendChild(script);
+    }
+
+    // Load Three.js first (using ES modules compatible version)
+    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.js', function() {
+        // Then load GLTFLoader
+        loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/GLTFLoader.js', function() {
+            // Then load DRACOLoader
+            loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/loaders/DRACOLoader.js', function() {
+                // Then load OrbitControls
+                loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/controls/OrbitControls.js', function() {
+                    // Then load GLTFExporter
+                    loadScript('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/js/exporters/GLTFExporter.js', function() {
+                        // Initialize the application once all dependencies are loaded
+                        initializeApplication();
+                    });
+                });
+            });
+        });
+    });
+})();
+
+// Wrap the entire application in a function that will be called after loading dependencies
+function initializeApplication() {
 let scene, camera, renderer, material, mesh, clock, controls;
 let isAnimating = true;
 
@@ -3922,3 +3954,4 @@ function resetLighting() {
     updateEnvironment();
     showTaskbarNotification('Lighting reset to defaults', 'success');
 }
+} // End of initializeApplication()
