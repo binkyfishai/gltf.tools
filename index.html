@@ -1798,6 +1798,58 @@
               overflow: hidden;
               text-overflow: ellipsis;
           }
+          
+          /* Material List */
+          .material-list {
+              max-height: 150px;
+              overflow-y: auto;
+              border: 1px inset #ece9d8;
+              padding: 5px;
+              margin-bottom: 5px;
+              background: white;
+          }
+          
+          /* Under Construction Banner */
+          .under-construction {
+              position: relative;
+              margin-bottom: 15px;
+              padding: 5px;
+              border: 1px dashed #cc0000;
+              background-color: rgba(255, 255, 240, 0.8);
+          }
+          
+          .construction-banner {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background-color: #ffff99;
+              padding: 5px;
+              margin-bottom: 10px;
+              border: 1px solid #dddd00;
+              font-family: 'MS Sans Serif', Arial, sans-serif;
+              font-weight: bold;
+              font-size: 14px;
+              color: #cc0000;
+              text-shadow: 1px 1px 0 #fff;
+          }
+          
+          .construction-banner img {
+              height: 24px;
+              margin: 0 10px;
+          }
+          
+          .construction-banner span {
+              animation: blink 1s infinite;
+              letter-spacing: 1px;
+          }
+          
+          @keyframes blink {
+              0% { opacity: 1; }
+              50% { opacity: 0.5; }
+              100% { opacity: 1; }
+          }
+          
+          /* Material Item */
     </style>
   </head>
   <body>
@@ -2066,15 +2118,26 @@ void main() {
             <div class="section">
                 <div class="section-title collapsible" onclick="toggleSection(this)">🎨 Material Editor</div>
                 <div class="collapsible-content">
-                    <div class="info-box" style="margin-bottom: 8px; background: #fffbea;">
-                        <strong>How to apply shaders:</strong><br>
-                        1. Load a model (click "📥 Sample")<br>
-                        2. Either select a material OR apply to entire scene<br>
-                        3. Create/select a shader in the left panel<br>
-                        4. Click "Apply" to apply it to the model<br>
-                        <span style="color: #856404; margin-top: 5px; display: block;">
-                            ⭐ Try the "Cel Shading" or "Cartoon Outline" shaders - they'll preserve your material colors!
-                        </span>
+                    <div class="under-construction">
+                        <div class="construction-banner">
+                            <img src="data:image/gif;base64,R0lGODlhGAAYAKIAAP/MAP/MM//MZv+ZM///zP//mf//AP///yH5BAEAAAcALAAAAAAYABgAAANheLrcHkTIGVIANJxA7X0TFgDHcRlHmiJXOm5LRrIAOK9rKH9KvecuYkMZji/kkvV6L5qBQJAQDgqBgGDgLRAKicJh0ShYCgXCwVFIJBKMQmKQSCwKjMQhkVg0GolEIgEAOw==" alt="Construction">
+                            <span>UNDER CONSTRUCTION</span>
+                            <img src="data:image/gif;base64,R0lGODlhGAAYAKIAAP/MAP/MM//MZv+ZM///zP//mf//AP///yH5BAEAAAcALAAAAAAYABgAAANheLrcHkTIGVIANJxA7X0TFgDHcRlHmiJXOm5LRrIAOK9rKH9KvecuYkMZji/kkvV6L5qBQJAQDgqBgGDgLRAKicJh0ShYCgXCwVFIJBKMQmKQSCwKjMQhkVg0GolEIgEAOw==" alt="Construction">
+                        </div>
+                        <div class="info-box" style="margin-bottom: 8px; background: #fffbea; opacity: 0.7;">
+                            <strong>How to apply shaders:</strong><br>
+                            1. Load a model (click "📥 Sample")<br>
+                            2. Either select a material OR apply to entire scene<br>
+                            3. Create/select a shader in the left panel<br>
+                            4. Click "Apply" to apply it to the model<br>
+                            <span style="color: #856404; margin-top: 5px; display: block;">
+                                ⭐ Try the "Cel Shading" or "Cartoon Outline" shaders - they'll preserve your material colors!
+                            </span>
+                        </div>
+                        <div style="text-align: center; font-family: 'MS Sans Serif', Arial; font-weight: bold; color: #cc0000; margin-bottom: 10px;">
+                            Shader functionality temporarily disabled<br>
+                            <span style="font-size: 0.8em; color: #666;">Check back soon!</span>
+                        </div>
                     </div>
                     <div id="materialList" class="material-list">
                         No materials found
@@ -2099,6 +2162,9 @@ void main() {
                         <div class="quick-actions">
                             <button class="small-button" onclick="applyShaderToScene()">✨ Apply to Scene</button>
                             <button class="small-button" onclick="resetSceneMaterials()">🔄 Reset Scene</button>
+                        </div>
+                        <div style="text-align: center; margin-top: 5px;">
+                            <img src="data:image/gif;base64,R0lGODlhIAAgAKIAAP///7szM8xmZpmZmWYzM////wAAAAAAACH5BAEAAAUALAAAAAAgACAAAAPFWLrc/jDKSau9OOvNu/9gKI5kaZ5oqq5s675wLM90bd94ru987//AoHBILBqPyKRyyWw6n9CodEqtWq/YrHbL7Xq/4LB4TC6bz+i0es1uu9/wuHxOr9vv+Lx+z+/7/4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAMKDAgAOw==" alt="Under Construction">
                         </div>
                     </div>
                 </div>
