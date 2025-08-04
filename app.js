@@ -4063,16 +4063,21 @@ let lastAnalysisReport = null;
 
 // Switch between analyzer tabs
 function switchAnalyzerTab(tab) {
+    // For the standalone analyzer window
+    const isFromStandaloneWindow = event && event.target.closest('#analyzer-window');
+    const containerSelector = isFromStandaloneWindow ? '#analyzer-window' : '#gltf-ui';
+    
     // Hide all tab content
-    document.querySelectorAll('#gltf-ui .tab-content').forEach(content => {
+    document.querySelectorAll(`${containerSelector} .tab-content`).forEach(content => {
         content.classList.remove('active');
     });
     
     // Show selected tab content
-    document.getElementById(`analyzer-${tab}`).classList.add('active');
+    const tabId = isFromStandaloneWindow ? `analyzer-${tab}-win` : `analyzer-${tab}`;
+    document.getElementById(tabId)?.classList.add('active');
     
     // Update active tab button
-    document.querySelectorAll('#gltf-ui .panel-tab').forEach(tabBtn => {
+    document.querySelectorAll(`${containerSelector} .panel-tab`).forEach(tabBtn => {
         tabBtn.classList.remove('active');
     });
     event.target.classList.add('active');
@@ -4103,8 +4108,11 @@ function analyzeGLTFModel(gltf) {
     // Store analysis result for export
     lastAnalysisReport = analysis;
     
-    // Render the current tab
-    refreshAnalyzerContent(currentAnalyzerTab);
+    // Refresh both the standalone window and sidebar content
+    // For standalone window
+    if (document.getElementById('analyzer-window').style.display !== 'none') {
+        refreshAnalyzerContent(currentAnalyzerTab);
+    }
     
     return analysis;
 }
@@ -4124,21 +4132,25 @@ function refreshAnalyzer() {
 function refreshAnalyzerContent(tab) {
     if (!analyzedModel) return;
     
+    // Determine if we're refreshing from the standalone window
+    const isStandaloneWindow = document.getElementById('analyzer-tree-win') !== null;
+    const suffix = isStandaloneWindow ? '-win' : '';
+    
     switch(tab) {
         case 'structure':
-            renderStructureTree();
+            renderStructureTree(suffix);
             break;
         case 'nodes':
-            renderNodesList();
+            renderNodesList(suffix);
             break;
         case 'materials':
-            renderMaterialsList();
+            renderMaterialsList(suffix);
             break;
         case 'textures':
-            renderTexturesGrid();
+            renderTexturesGrid(suffix);
             break;
         case 'animations':
-            renderAnimationsList();
+            renderAnimationsList(suffix);
             break;
     }
 }
@@ -4628,8 +4640,8 @@ function analyzeBenchmark() {
 }
 
 // Render tree structure
-function renderStructureTree() {
-    const treeElement = document.getElementById('analyzer-tree');
+function renderStructureTree(suffix = '') {
+    const treeElement = document.getElementById('analyzer-tree' + suffix);
     
     if (!analyzedModel || !treeElement) {
         return;
@@ -4697,8 +4709,8 @@ function renderStructureTree() {
 }
 
 // Render nodes list
-function renderNodesList() {
-    const nodesElement = document.getElementById('analyzer-nodes-list');
+function renderNodesList(suffix = '') {
+    const nodesElement = document.getElementById('analyzer-nodes-list' + suffix);
     
     if (!analyzedModel || !nodesElement) {
         return;
@@ -4752,8 +4764,8 @@ function renderNodesList() {
 }
 
 // Render materials list
-function renderMaterialsList() {
-    const materialsElement = document.getElementById('analyzer-materials-list');
+function renderMaterialsList(suffix = '') {
+    const materialsElement = document.getElementById('analyzer-materials-list' + suffix);
     
     if (!analyzedModel || !materialsElement) {
         return;
@@ -4875,8 +4887,8 @@ function renderMaterialsList() {
 }
 
 // Render textures grid
-function renderTexturesGrid() {
-    const texturesElement = document.getElementById('analyzer-textures-grid');
+function renderTexturesGrid(suffix = '') {
+    const texturesElement = document.getElementById('analyzer-textures-grid' + suffix);
     
     if (!analyzedModel || !texturesElement) {
         return;
@@ -4911,8 +4923,8 @@ function renderTexturesGrid() {
 }
 
 // Render animations list
-function renderAnimationsList() {
-    const animationsElement = document.getElementById('analyzer-animations-list');
+function renderAnimationsList(suffix = '') {
+    const animationsElement = document.getElementById('analyzer-animations-list' + suffix);
     
     if (!analyzedModel || !animationsElement) {
         return;
