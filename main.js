@@ -5,20 +5,40 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
-// Make THREE and other libraries available globally
-window.THREE = THREE;
+// Safe assignment function to avoid read-only property errors
+function safeAssign(obj, prop, value) {
+    try {
+        if (!(prop in obj) || obj[prop] !== value) {
+            obj[prop] = value;
+        }
+    } catch (error) {
+        console.warn(`Could not assign ${prop}:`, error);
+        try {
+            Object.defineProperty(obj, prop, {
+                value: value,
+                writable: true,
+                configurable: true
+            });
+        } catch (defineError) {
+            console.warn(`Could not define property ${prop}:`, defineError);
+        }
+    }
+}
+
+// Make THREE available globally first
+safeAssign(window, 'THREE', THREE);
 
 // Attach additional classes to THREE namespace for compatibility
-THREE.GLTFLoader = GLTFLoader;
-THREE.DRACOLoader = DRACOLoader;
-THREE.OrbitControls = OrbitControls;
-THREE.GLTFExporter = GLTFExporter;
+safeAssign(THREE, 'GLTFLoader', GLTFLoader);
+safeAssign(THREE, 'DRACOLoader', DRACOLoader);
+safeAssign(THREE, 'OrbitControls', OrbitControls);
+safeAssign(THREE, 'GLTFExporter', GLTFExporter);
 
 // Also make them available as globals for backwards compatibility
-window.GLTFLoader = GLTFLoader;
-window.DRACOLoader = DRACOLoader;
-window.OrbitControls = OrbitControls;
-window.GLTFExporter = GLTFExporter;
+safeAssign(window, 'GLTFLoader', GLTFLoader);
+safeAssign(window, 'DRACOLoader', DRACOLoader);
+safeAssign(window, 'OrbitControls', OrbitControls);
+safeAssign(window, 'GLTFExporter', GLTFExporter);
 
 console.log('THREE.js libraries loaded:', !!window.THREE);
 console.log('OrbitControls available:', !!THREE.OrbitControls);
