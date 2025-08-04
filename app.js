@@ -472,6 +472,8 @@ function selectMaterial(index) {
     }
 }
 
+// Material shader application - COMMENTED OUT DUE TO ISSUES
+/*
 function applyShaderToMaterial(material) {
     try {
         console.log("Applying shader to material:", material);
@@ -586,6 +588,13 @@ function applyShaderToMaterial(material) {
         console.error("Error applying shader to material:", error);
         updateGLTFStatus("Error applying shader to material: " + error.message);
     }
+}
+*/
+
+// Temporary placeholder function to avoid errors
+function applyShaderToMaterial(material) {
+    updateGLTFStatus("Shader functionality temporarily disabled");
+    showTaskbarNotification("Shader functionality has been disabled", 'info');
 }
 
 function updateModelInfo(gltf) {
@@ -994,6 +1003,8 @@ function toggleDebugMode() {
     updateGLTFStatus("Debug mode: " + (debugMode.checked ? "ON" : "OFF"));
 }
 
+// Reset selected material - COMMENTED OUT DUE TO ISSUES
+/*
 function resetSelectedMaterial() {
     if (!selectedMaterial) {
         updateGLTFStatus("No material selected to reset");
@@ -1028,8 +1039,17 @@ function resetSelectedMaterial() {
         showTaskbarNotification("Material reset to default", 'info');
     }
 }
+*/
+
+// Temporary placeholder function to avoid errors
+function resetSelectedMaterial() {
+    updateGLTFStatus("Shader functionality temporarily disabled");
+    showTaskbarNotification("Shader functionality has been disabled", 'info');
+}
 
 // Function to apply the current shader to the selected material
+// Function to apply shader to selected material - COMMENTED OUT DUE TO ISSUES
+/*
 function applyShaderToSelectedMaterial() {
     if (!selectedMaterial) {
         updateGLTFStatus("No material selected. Please select a material first.");
@@ -1062,6 +1082,13 @@ function applyShaderToSelectedMaterial() {
         updateGLTFStatus("Failed to apply shader: " + error.message);
         showTaskbarNotification("Failed to apply shader", 'error');
     }
+}
+*/
+
+// Temporary placeholder function to avoid errors
+function applyShaderToSelectedMaterial() {
+    updateGLTFStatus("Shader functionality temporarily disabled");
+    showTaskbarNotification("Shader functionality has been disabled", 'info');
 }
 
 function setCameraView(view) {
@@ -5095,7 +5122,8 @@ function closeAnalyzer() {
     minimizeAnalyzer();
 }
 
-// Apply shader to the entire scene
+// Apply shader to the entire scene - COMMENTED OUT DUE TO ISSUES
+/*
 function applyShaderToScene() {
     try {
         console.log("Applying shader to entire scene");
@@ -5244,4 +5272,16 @@ function resetSceneMaterials() {
         console.error("Error resetting materials:", error);
         updateGLTFStatus("Error resetting materials: " + error.message);
     }
+}
+*/
+
+// Temporary placeholder functions to avoid errors
+function applyShaderToScene() {
+    updateGLTFStatus("Shader functionality temporarily disabled");
+    showTaskbarNotification("Shader functionality has been disabled", 'info');
+}
+
+function resetSceneMaterials() {
+    updateGLTFStatus("Shader functionality temporarily disabled");
+    showTaskbarNotification("Shader functionality has been disabled", 'info');
 }
