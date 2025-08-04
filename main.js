@@ -12,8 +12,30 @@ window.DRACOLoader = DRACOLoader;
 window.OrbitControls = OrbitControls;
 window.GLTFExporter = GLTFExporter;
 
-// Only import app.js and globals.js after setting global THREE
-import './globals.js';
-import './app.js';
+console.log('THREE.js libraries loaded:', !!window.THREE);
+
+// Function to ensure DOM is ready before initialization
+function domReady(callback) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback);
+    } else {
+        callback();
+    }
+}
+
+// Initialize the application when both THREE is loaded and DOM is ready
+domReady(() => {
+    console.log('DOM ready, initializing application...');
+    
+    // Import globals and app after ensuring everything is ready
+    Promise.all([
+        import('./globals.js'),
+        import('./app.js')
+    ]).then(() => {
+        console.log('All modules loaded successfully');
+    }).catch(error => {
+        console.error('Error loading modules:', error);
+    });
+});
 
 console.log('Main entry point loaded'); 

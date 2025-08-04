@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Public base path - set to './' for relative paths in production
+  // Public base path - ensure consistent relative paths
   base: './',
   
   // Configure the build output
@@ -9,6 +9,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     assetsInlineLimit: 0, // Don't inline assets as base64
+    sourcemap: false, // Disable sourcemaps for production
     rollupOptions: {
       input: {
         main: 'index.html'
@@ -16,7 +17,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           three: ['three']
-        }
+        },
+        // Ensure consistent file naming
+        entryFileNames: '[name]-[hash].js',
+        chunkFileNames: '[name]-[hash].js',
+        assetFileNames: '[name]-[hash].[ext]'
       }
     }
   },
@@ -25,5 +30,10 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['three']
   }
 }); 

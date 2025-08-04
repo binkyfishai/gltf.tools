@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <title>Three.js glTF Shader Studio - Windows XP Style</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <!-- Vite entry point -->
-    <script type="module" src="/main.js"></script>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <script>
     // Browser check - prevent server-side rendering issues
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       console.log('Running in a non-browser environment, skipping initialization');
     }
     </script>
-    <!-- Vite will automatically inject the compiled JavaScript -->
     <style>
         body { 
             margin: 0; 
@@ -115,7 +112,7 @@
         </div>
     </div>
 
-    <!-- Use Vite's entry point -->
+    <!-- Use Vite's entry point with relative path -->
     <script type="module" src="./main.js"></script>
 </body>
 </html> 
