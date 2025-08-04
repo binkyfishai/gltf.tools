@@ -5,14 +5,23 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
-// Make THREE and other libraries available globally BEFORE importing app code
+// Make THREE and other libraries available globally
 window.THREE = THREE;
+
+// Attach additional classes to THREE namespace for compatibility
+THREE.GLTFLoader = GLTFLoader;
+THREE.DRACOLoader = DRACOLoader;
+THREE.OrbitControls = OrbitControls;
+THREE.GLTFExporter = GLTFExporter;
+
+// Also make them available as globals for backwards compatibility
 window.GLTFLoader = GLTFLoader;
 window.DRACOLoader = DRACOLoader;
 window.OrbitControls = OrbitControls;
 window.GLTFExporter = GLTFExporter;
 
 console.log('THREE.js libraries loaded:', !!window.THREE);
+console.log('OrbitControls available:', !!THREE.OrbitControls);
 
 // Function to ensure DOM is ready before initialization
 function domReady(callback) {
