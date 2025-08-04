@@ -1401,6 +1401,9 @@ function handleFileLoad(file) {
     updateGLTFStatus("Loading model...");
     showLoadingProgress();
     
+    // Store the file reference for size calculation
+    window.lastLoadedFile = file;
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         const arrayBuffer = e.target.result;
@@ -1927,7 +1930,12 @@ function updateOptimizerStats(gltf) {
     let totalMaterials = 0;
     let totalMeshes = 0;
     let totalNodes = 0;
-    let estimatedSize = 0;
+    let actualFileSize = 0;
+    
+    // Get actual file size if available from the last loaded file
+    if (window.lastLoadedFile) {
+        actualFileSize = window.lastLoadedFile.size / 1024; // KB
+    }
     
     // Count meshes and geometry
     gltf.scene.traverse((child) => {
@@ -1945,8 +1953,23 @@ function updateOptimizerStats(gltf) {
     // Count materials
     totalMaterials = modelMaterials.length;
     
-    // Estimate file size (rough approximation)
-    estimatedSize = (totalVertices * 32 + totalTriangles * 12 + totalMaterials * 1024) / 1024; // KB
+    // Count textures
+    const textureSet = new Set();
+    gltf.scene.traverse((child) => {
+        if (child.material) {
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach(mat => {
+                // Check for all possible texture maps
+                ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 
+                 'emissiveMap', 'aoMap', 'displacementMap', 'alphaMap'].forEach(mapType => {
+                    if (mat[mapType] && mat[mapType].image) {
+                        textureSet.add(mat[mapType].uuid);
+                    }
+                });
+            });
+        }
+    });
+    totalTextures = textureSet.size;
     
     // Store original stats for comparison
     originalModelStats = {
@@ -1955,7 +1978,9 @@ function updateOptimizerStats(gltf) {
         meshes: totalMeshes,
         materials: totalMaterials,
         nodes: totalNodes,
-        size: estimatedSize
+        textures: totalTextures,
+        size: actualFileSize || 0,
+        fileType: window.lastLoadedFile ? window.lastLoadedFile.name.split('.').pop().toLowerCase() : 'unknown'
     };
     
     statsElement.innerHTML = `
@@ -1977,8 +2002,19 @@ function updateOptimizerStats(gltf) {
                 <span class="value">${totalMaterials}</span>
             </div>
         </div>
+        <div class="optimizer-grid" style="margin-top: 5px;">
+            <div class="optimizer-stat">
+                <span class="label">Textures</span>
+                <span class="value">${totalTextures}</span>
+            </div>
+            <div class="optimizer-stat">
+                <span class="label">Nodes</span>
+                <span class="value">${totalNodes}</span>
+            </div>
+        </div>
         <div style="text-align: center; margin-top: 5px; font-size: 9px;">
-            <strong>Estimated Size:</strong> ${estimatedSize.toFixed(1)} KB
+            <strong>File Type:</strong> ${originalModelStats.fileType.toUpperCase()} | 
+            <strong>Actual Size:</strong> ${originalModelStats.size.toFixed(1)} KB
         </div>
     `;
 }
@@ -2087,7 +2123,11 @@ function optimizeModel() {
         const newMaterials = Math.floor(originalModelStats.materials * (1 - materialReduction / 100));
         const newSize = originalModelStats.size * (1 - sizeReduction / 100);
         
-        optimizedModel = {
+        // Use the actual model for export instead of just stats
+        optimizedModel = gltfModel.clone();
+        
+        // Store optimization stats
+        optimizedModel.userData = {
             vertices: newVertices,
             materials: newMaterials,
             size: newSize,
@@ -2128,32 +2168,54 @@ function exportOptimized() {
         return;
     }
     
-    updateGLTFStatus("Exporting optimized model...");
+    // Get export format from UI
+    const exportFormat = document.getElementById('exportFormatSelect').value || 'gltf';
+    const isBinary = exportFormat === 'glb';
     
-    // Simulate export process
-    setTimeout(() => {
-        const timestamp = new Date().toISOString().split('T')[0];
-        updateGLTFStatus("Optimized model exported successfully");
-        showTaskbarNotification(`Optimized model saved as optimized_model_${timestamp}.gltf`, 'success');
-        
-        // You would implement actual optimization and export here
-        // For now, we'll just export the original model with a different name
-        if (gltfModel) {
-            const exporter = new THREE.GLTFExporter();
-            exporter.parse(gltfModel, (result) => {
+    updateGLTFStatus(`Exporting optimized model as ${exportFormat.toUpperCase()}...`);
+    
+    // Perform export
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = `optimized_model_${timestamp}.${exportFormat}`;
+    
+    if (optimizedModel) {
+        const exporter = new THREE.GLTFExporter();
+        exporter.parse(optimizedModel, (result) => {
+            let blob;
+            
+            if (isBinary) {
+                // Binary GLB format
+                blob = new Blob([result], { type: 'application/octet-stream' });
+            } else {
+                // JSON GLTF format
                 const output = JSON.stringify(result, null, 2);
-                const blob = new Blob([output], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `optimized_model_${timestamp}.gltf`;
-                link.click();
-                
-                URL.revokeObjectURL(url);
-            }, { binary: false });
-        }
-    }, 1000);
+                blob = new Blob([output], { type: 'application/json' });
+            }
+            
+            const url = URL.createObjectURL(blob);
+            
+            // Calculate the exported file size
+            const exportedSize = blob.size / 1024; // KB
+            const originalSize = originalModelStats.size;
+            const sizeDiff = originalSize > 0 ? ((exportedSize - originalSize) / originalSize * 100).toFixed(1) : 0;
+            const sizeChangeText = sizeDiff > 0 ? `+${sizeDiff}%` : `${sizeDiff}%`;
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            
+            updateGLTFStatus(`Optimized model exported as ${exportFormat.toUpperCase()} (${exportedSize.toFixed(1)} KB, ${sizeChangeText})`);
+            showTaskbarNotification(`Optimized model saved as ${fileName}`, 'success');
+        }, { 
+            binary: isBinary,
+            onlyVisible: true,
+            maxTextureSize: 4096,
+            animations: animations
+        });
+    }
 }
 
 // ========== APP WINDOWS FUNCTIONALITY ==========

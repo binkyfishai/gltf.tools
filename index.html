@@ -2214,10 +2214,20 @@ void main() {
                         </div>
                     </div>
                     
+                    <!-- Export Format -->
+                    <div class="control-group" style="margin-top: 10px;">
+                        <label>Export Format:</label>
+                        <select id="exportFormatSelect" class="select-input">
+                            <option value="gltf">GLTF (.gltf)</option>
+                            <option value="glb">GLB (.glb)</option>
+                        </select>
+                    </div>
+                    
                     <!-- Optimization Actions -->
                     <div class="quick-actions" style="margin-top: 10px;">
                         <button class="button" onclick="analyzeModel()">🔍 Analyze</button>
                         <button class="button" onclick="optimizeModel()">⚡ Optimize</button>
+                        <button class="button" onclick="exportOptimized()">💾 Export</button>
                     </div>
                 </div>
             </div>
