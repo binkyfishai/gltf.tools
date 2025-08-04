@@ -2069,7 +2069,7 @@ void main() {
                     <div class="info-box" style="margin-bottom: 8px; background: #fffbea;">
                         <strong>How to apply shaders:</strong><br>
                         1. Load a model (click "📥 Sample")<br>
-                        2. Click a material below to select it<br>
+                        2. Either select a material OR apply to entire scene<br>
                         3. Create/select a shader in the left panel<br>
                         4. Click "Apply" to apply it to the model<br>
                         <span style="color: #856404; margin-top: 5px; display: block;">
@@ -2090,7 +2090,16 @@ void main() {
                     </div>
                     <div class="quick-actions">
                         <button class="small-button" onclick="resetSelectedMaterial()">🔄 Reset Material</button>
-                        <button class="small-button" onclick="applyShaderToSelectedMaterial()">✅ Apply Shader</button>
+                        <button class="small-button" onclick="applyShaderToSelectedMaterial()">✅ Apply to Material</button>
+                    </div>
+                    
+                    <!-- Scene Shader Controls -->
+                    <div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">🌟 Scene Shader Controls</div>
+                        <div class="quick-actions">
+                            <button class="small-button" onclick="applyShaderToScene()">✨ Apply to Scene</button>
+                            <button class="small-button" onclick="resetSceneMaterials()">🔄 Reset Scene</button>
+                        </div>
                     </div>
                 </div>
             </div>

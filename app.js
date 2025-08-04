@@ -5094,3 +5094,154 @@ function minimizeAnalyzer() {
 function closeAnalyzer() {
     minimizeAnalyzer();
 }
+
+// Apply shader to the entire scene
+function applyShaderToScene() {
+    try {
+        console.log("Applying shader to entire scene");
+        
+        // Get the current shader from the editors
+        const vertexShader = vertexTextarea.value || getDefaultVertexShader();
+        const fragmentShader = fragmentTextarea.value || getDefaultFragmentShader();
+        
+        // Clear any previous errors
+        clearErrors();
+        
+        if (!gltfModel) {
+            updateGLTFStatus("No model loaded to apply shader to");
+            showTaskbarNotification("Load a glTF model first", 'warning');
+            return;
+        }
+        
+        // Store original materials for later restoration
+        if (!window.originalMaterials) {
+            window.originalMaterials = [];
+            gltfModel.traverse((node) => {
+                if (node.material) {
+                    const materials = Array.isArray(node.material) ? node.material : [node.material];
+                    materials.forEach((mat, index) => {
+                        window.originalMaterials.push({
+                            node: node,
+                            material: mat.clone(),
+                            index: Array.isArray(node.material) ? index : -1
+                        });
+                    });
+                }
+            });
+        }
+        
+        // Apply the shader to all materials in the scene
+        gltfModel.traverse((node) => {
+            if (node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                materials.forEach((mat, index) => {
+                    // Create a new shader material for each material
+                    const materialColor = mat.color ? mat.color.clone() : new THREE.Color(0.8, 0.8, 0.8);
+                    const opacity = mat.opacity !== undefined ? mat.opacity : 1.0;
+                    
+                    // Prepare shader material uniforms
+                    const uniforms = {
+                        diffuse: { value: materialColor },
+                        opacity: { value: opacity },
+                        time: { value: 0.0 },
+                        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+                    };
+                    
+                    // Check for textures and add them to uniforms
+                    let hasMap = false;
+                    if (mat.map) {
+                        uniforms.map = { value: mat.map };
+                        uniforms.useMap = { value: true };
+                        hasMap = true;
+                    }
+                    
+                    // Add vUv to vertex shader if using textures and it doesn't already have it
+                    let finalVertexShader = vertexShader;
+                    let finalFragmentShader = fragmentShader;
+                    
+                    if (hasMap) {
+                        if (!finalVertexShader.includes('varying vec2 vUv')) {
+                            finalVertexShader = 'varying vec2 vUv;\n' + finalVertexShader;
+                            finalVertexShader = finalVertexShader.replace('void main() {', 
+                                'void main() {\n    vUv = uv;');
+                        }
+                        
+                        if (!finalFragmentShader.includes('varying vec2 vUv')) {
+                            finalFragmentShader = 'varying vec2 vUv;\nuniform sampler2D map;\nuniform bool useMap;\n' + finalFragmentShader;
+                            
+                            // Inject texture sampling code before gl_FragColor
+                            finalFragmentShader = finalFragmentShader.replace(
+                                /vec3 color = ([^;]+);/g,
+                                'vec3 texColor = useMap ? texture2D(map, vUv).rgb : diffuse;\n    vec3 color = $1;'
+                            );
+                            
+                            finalFragmentShader = finalFragmentShader.replace(
+                                /gl_FragColor = vec4\(color, opacity\);/g,
+                                'gl_FragColor = vec4(color * texColor, opacity);'
+                            );
+                        }
+                    }
+                    
+                    // Create a shader material with our uniforms
+                    const shaderMaterial = new THREE.ShaderMaterial({
+                        uniforms: uniforms,
+                        vertexShader: finalVertexShader,
+                        fragmentShader: finalFragmentShader,
+                        transparent: true
+                    });
+                    
+                    // Apply the material
+                    if (Array.isArray(node.material)) {
+                        node.material[index] = shaderMaterial;
+                    } else {
+                        node.material = shaderMaterial;
+                    }
+                    
+                    // Force material update
+                    if (node.material) {
+                        node.material.needsUpdate = true;
+                    }
+                });
+            }
+        });
+        
+        updateGLTFStatus("Shader successfully applied to entire scene");
+        showTaskbarNotification("Scene shader applied successfully", 'success');
+        
+    } catch (error) {
+        console.error("Error applying shader to scene:", error);
+        updateGLTFStatus("Error applying shader to scene: " + error.message);
+        showTaskbarNotification("Failed to apply shader to scene", 'error');
+    }
+}
+
+// Reset all materials to their original state
+function resetSceneMaterials() {
+    if (!window.originalMaterials || !gltfModel) {
+        updateGLTFStatus("No original materials to restore");
+        return;
+    }
+    
+    try {
+        // Restore all original materials
+        window.originalMaterials.forEach((item) => {
+            if (item.node) {
+                if (item.index >= 0 && Array.isArray(item.node.material)) {
+                    item.node.material[item.index] = item.material.clone();
+                } else {
+                    item.node.material = item.material.clone();
+                }
+                
+                if (item.node.material) {
+                    item.node.material.needsUpdate = true;
+                }
+            }
+        });
+        
+        updateGLTFStatus("All materials restored to original state");
+        showTaskbarNotification("Scene materials reset", 'success');
+    } catch (error) {
+        console.error("Error resetting materials:", error);
+        updateGLTFStatus("Error resetting materials: " + error.message);
+    }
+}
