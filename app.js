@@ -172,6 +172,48 @@ void main() {
     gl_FragColor = vec4(color, opacity);
 }`
     },
+    {
+        name: "Pixelated",
+        category: "Retro",
+        description: "Pixelate the rendering for a retro 8-bit game look",
+        vertex: `
+varying vec2 vUv;
+
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+        fragment: `
+precision highp float;
+uniform vec3 diffuse;
+uniform float opacity;
+uniform sampler2D map;
+uniform bool useMap;
+uniform vec2 resolution;
+varying vec2 vUv;
+
+void main() {
+    // Get base color from texture or diffuse
+    vec3 baseColor = useMap ? texture2D(map, vUv).rgb : diffuse;
+    
+    // Pixelation effect
+    float pixels = 64.0; // Adjust for more/less pixelation
+    vec2 pixelSize = vec2(1.0) / pixels;
+    
+    // Calculate pixelated UV coordinates
+    vec2 pixelatedUv = floor(vUv / pixelSize) * pixelSize;
+    
+    // Sample with pixelated coordinates if we have a texture
+    vec3 color = useMap ? texture2D(map, pixelatedUv).rgb : baseColor;
+    
+    // Add dithering pattern for more retro feel
+    float dither = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) * 0.05;
+    color = floor(color * 6.0) / 6.0; // Color banding
+    color += vec3(dither); // Add dithering
+    
+    gl_FragColor = vec4(color, opacity);
+}`
+    },
 
 ];
 const scaleSlider = document.getElementById("scaleSlider");
@@ -3748,35 +3790,65 @@ function saveShaderVariant() {
 // ========== LIGHTING FUNCTIONALITY ==========
 
 function initializeLighting() {
-    // Create professional studio lighting setup
-    setupStudioLighting();
+    // Create lighting group
+    lightGroup = new THREE.Group();
+    scene.add(lightGroup);
     
-    // Initialize lighting controls
-    const keyLightSlider = document.getElementById('keyLightIntensity');
-    const fillLightSlider = document.getElementById('fillLightIntensity');
-    const ambientLightSlider = document.getElementById('ambientLightIntensity');
+    // Key light (main light)
+    keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(1, 1, 2);
+    keyLight.castShadow = true;
+    keyLight.shadow.bias = -0.0001;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 50;
+    keyLight.shadow.camera.left = -10;
+    keyLight.shadow.camera.right = 10;
+    keyLight.shadow.camera.top = 10;
+    keyLight.shadow.camera.bottom = -10;
+    lightGroup.add(keyLight);
+    
+    // Fill light (softer light from side)
+    fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight.position.set(-1, 0.5, 1);
+    lightGroup.add(fillLight);
+    
+    // Rim light (for highlighting edges)
+    rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    rimLight.position.set(0.5, 0, -1);
+    lightGroup.add(rimLight);
+    
+    // Ambient light (overall scene illumination)
+    ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    lightGroup.add(ambientLight);
+    
+    // Create HDRI environment (set to null initially)
+    envMap = null;
+    
+    // Default environment settings
+    updateEnvironment();
+    
+    // Initialize lighting controls in UI
+    const keyLightIntensity = document.getElementById('keyLightIntensity');
+    const fillLightIntensity = document.getElementById('fillLightIntensity');
+    const ambientLightIntensity = document.getElementById('ambientLightIntensity');
     const environmentSelect = document.getElementById('environmentSelect');
-    const shadowsCheckbox = document.getElementById('enableShadows');
-    const reflectionsCheckbox = document.getElementById('enableReflections');
+    const enableShadows = document.getElementById('enableShadows');
+    const enableReflections = document.getElementById('enableReflections');
     
-    if (keyLightSlider) {
-        keyLightSlider.addEventListener('input', updateLighting);
-    }
-    if (fillLightSlider) {
-        fillLightSlider.addEventListener('input', updateLighting);
-    }
-    if (ambientLightSlider) {
-        ambientLightSlider.addEventListener('input', updateLighting);
-    }
-    if (environmentSelect) {
-        environmentSelect.addEventListener('change', updateEnvironment);
-    }
-    if (shadowsCheckbox) {
-        shadowsCheckbox.addEventListener('change', updateLighting);
-    }
-    if (reflectionsCheckbox) {
-        reflectionsCheckbox.addEventListener('change', updateLighting);
-    }
+    if (keyLightIntensity) keyLightIntensity.value = 1.2;
+    if (fillLightIntensity) fillLightIntensity.value = 0.5;
+    if (ambientLightIntensity) ambientLightIntensity.value = 0.3;
+    if (environmentSelect) environmentSelect.value = 'studio';
+    if (enableShadows) enableShadows.checked = true;
+    if (enableReflections) enableReflections.checked = false;
+    
+    document.getElementById('keyLightValue').textContent = "1.2";
+    document.getElementById('fillLightValue').textContent = "0.5";
+    document.getElementById('ambientLightValue').textContent = "0.3";
+    
+    updateLighting();
 }
 
 function setupStudioLighting() {
@@ -3873,34 +3945,101 @@ function updateEnvironment() {
 }
 
 function setLightingPreset(preset) {
-    const keySlider = document.getElementById('keyLightIntensity');
-    const fillSlider = document.getElementById('fillLightIntensity');
-    const ambientSlider = document.getElementById('ambientLightIntensity');
-    const shadowsCheckbox = document.getElementById('enableShadows');
+    const keyLightElement = document.getElementById('keyLightIntensity');
+    const fillLightElement = document.getElementById('fillLightIntensity');
+    const ambientLightElement = document.getElementById('ambientLightIntensity');
+    const environmentElement = document.getElementById('environmentSelect');
+    const shadowsElement = document.getElementById('enableShadows');
+    const reflectionsElement = document.getElementById('enableReflections');
     
-    switch (preset) {
+    // Set lighting values based on preset
+    switch(preset) {
+        case 'studio':
+            keyLightElement.value = 1.2;
+            fillLightElement.value = 0.5;
+            ambientLightElement.value = 0.3;
+            environmentElement.value = 'studio';
+            shadowsElement.checked = true;
+            reflectionsElement.checked = false;
+            keyLight.position.set(1, 1, 2);
+            fillLight.position.set(-1, 0.5, 1);
+            rimLight.position.set(0.5, 0, -1);
+            keyLight.color.set(0xffffff);
+            fillLight.color.set(0xffffff);
+            rimLight.color.set(0xffffff);
+            break;
+        
         case 'dramatic':
-            if (keySlider) keySlider.value = 2.0;
-            if (fillSlider) fillSlider.value = 0.2;
-            if (ambientSlider) ambientSlider.value = 0.1;
-            if (shadowsCheckbox) shadowsCheckbox.checked = true;
+            keyLightElement.value = 1.5;
+            fillLightElement.value = 0.2;
+            ambientLightElement.value = 0.1;
+            environmentElement.value = 'dramatic';
+            shadowsElement.checked = true;
+            reflectionsElement.checked = false;
+            keyLight.position.set(1.5, 1.8, 1);
+            fillLight.position.set(-0.8, 0.2, 0.8);
+            rimLight.position.set(0, 0, -1);
+            keyLight.color.set(0xffffff);
+            fillLight.color.set(0xffffff);
+            rimLight.color.set(0x9999ff);
             break;
+        
         case 'soft':
-            if (keySlider) keySlider.value = 0.8;
-            if (fillSlider) fillSlider.value = 0.8;
-            if (ambientSlider) ambientSlider.value = 0.6;
-            if (shadowsCheckbox) shadowsCheckbox.checked = false;
+            keyLightElement.value = 0.8;
+            fillLightElement.value = 0.7;
+            ambientLightElement.value = 0.5;
+            environmentElement.value = 'soft';
+            shadowsElement.checked = true;
+            reflectionsElement.checked = false;
+            keyLight.position.set(1, 1.5, 1);
+            fillLight.position.set(-0.8, 0.8, 0.8);
+            rimLight.position.set(0, -0.2, -1);
+            keyLight.color.set(0xfffaf0);
+            fillLight.color.set(0xfff5ea);
+            rimLight.color.set(0xfff0e0);
             break;
-        case 'bright':
-            if (keySlider) keySlider.value = 1.5;
-            if (fillSlider) fillSlider.value = 1.0;
-            if (ambientSlider) ambientSlider.value = 0.8;
-            if (shadowsCheckbox) shadowsCheckbox.checked = false;
+            
+        case 'outdoor':
+            keyLightElement.value = 2.0;
+            fillLightElement.value = 0.4;
+            ambientLightElement.value = 0.6;
+            environmentElement.value = 'warm';
+            shadowsElement.checked = true;
+            reflectionsElement.checked = true;
+            keyLight.position.set(1, 2, 1);
+            fillLight.position.set(-0.5, 0.2, 0.5);
+            rimLight.position.set(0, -0.5, -1);
+            keyLight.color.set(0xfffbea);  // Slightly warm sunlight
+            fillLight.color.set(0xc2d0ff); // Slightly blue sky fill
+            rimLight.color.set(0xfffbea);
+            break;
+            
+        case 'night':
+            keyLightElement.value = 0.6;
+            fillLightElement.value = 0.3;
+            ambientLightElement.value = 0.1;
+            environmentElement.value = 'cool';
+            shadowsElement.checked = true;
+            reflectionsElement.checked = true;
+            keyLight.position.set(1, 1, 1);
+            fillLight.position.set(-1, 0.5, 0.5);
+            rimLight.position.set(0, 0, -1);
+            keyLight.color.set(0x8baeff);  // Moon blue
+            fillLight.color.set(0x4065d6);  // Deep blue
+            rimLight.color.set(0x4c72db);  // Blue rim
             break;
     }
     
+    // Update UI displays
+    document.getElementById('keyLightValue').textContent = keyLightElement.value;
+    document.getElementById('fillLightValue').textContent = fillLightElement.value;
+    document.getElementById('ambientLightValue').textContent = ambientLightElement.value;
+    
+    // Apply the lighting changes
     updateLighting();
-    showTaskbarNotification(`Applied ${preset} lighting preset`, 'success');
+    updateEnvironment();
+    
+    updateStatus(`Lighting preset applied: ${preset}`);
 }
 
 function resetLighting() {
