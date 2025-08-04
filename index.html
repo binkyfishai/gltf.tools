@@ -13,36 +13,32 @@
             padding-bottom: 40px; /* Account for taskbar */
         }
         
-        #ui {
+        #ui, #gltf-ui, .app-window {
             position: absolute;
+            background: #ece9d8;
+            border: 1px solid #0054e3;
+            border-radius: 3px;
+            font-family: "Tahoma", sans-serif;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            min-width: 280px;
+            resize: none;
+        }
+        
+        #ui {
             top: 10px;
             left: 10px;
             width: 420px;
             max-height: calc(100vh - 90px); /* Account for taskbar */
-            background: #ece9d8;
-            border: 2px outset #ece9d8;
-            font-family: "Tahoma", sans-serif;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            overflow-y: auto;
-            min-width: 280px;
             max-width: 60vw;
-            resize: none;
         }
         
         #gltf-ui {
-            position: absolute;
             top: 10px;
             right: 10px;
             width: 380px;
             max-height: calc(100vh - 90px); /* Account for taskbar */
-            background: #ece9d8;
-            border: 2px outset #ece9d8;
-            font-family: "Tahoma", sans-serif;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            overflow-y: auto;
-            min-width: 280px;
             max-width: 60vw;
-            resize: none;
         }
         
         .resize-handle {
@@ -274,35 +270,47 @@
             font-size: 11px;
             border-bottom: 1px solid #316ac5;
             position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
         }
         
-        .title-bar::before {
-            content: "🖥️";
-            margin-right: 5px;
+        .title-bar span {
+            display: flex;
+            align-items: center;
         }
+        
+
         
         .window-buttons {
-            position: absolute;
-            right: 3px;
-            top: 2px;
+            display: flex;
+            gap: 2px;
         }
         
         .window-button {
-            display: inline-block;
             width: 16px;
             height: 14px;
-            background: #ece9d8;
-            border: 1px outset #ece9d8;
-            margin-left: 2px;
-            text-align: center;
-            line-height: 12px;
-            font-size: 8px;
+            background: linear-gradient(to bottom, #ffffff 0%, #ecebe5 50%, #d8d0c0 51%, #ece9d8 100%);
+            border: 1px solid #000000;
+            border-radius: 1px;
+            font-size: 9px;
             cursor: pointer;
-            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0px 0px 1px rgba(0,0,0,0.3);
         }
         
         .window-button:hover {
-            background: #ddd;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 50%, #d8d8d8 51%, #f2f2f2 100%);
+        }
+        
+        .window-button:active {
+            background: linear-gradient(to bottom, #d8d8d8 0%, #e6e6e6 50%, #f2f2f2 51%, #f2f2f2 100%);
+            border: 1px inset #ece9d8;
         }
         
         .content {
@@ -1342,17 +1350,15 @@
           
           /* Windows XP App Windows */
           .app-window {
-              position: absolute;
               width: 500px;
               height: 400px;
-              background: #ece9d8;
-              border: 2px outset #ece9d8;
-              box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
               z-index: 1000;
               resize: both;
               overflow: hidden;
               min-width: 300px;
               min-height: 200px;
+              border: 1px solid #0054e3;
+              border-radius: 3px;
           }
           
           .window-titlebar {
@@ -1382,24 +1388,26 @@
           .window-button {
               width: 16px;
               height: 14px;
-              background: #c0c0c0;
-              border: 1px outset #c0c0c0;
-              font-size: 8px;
+              background: linear-gradient(to bottom, #ffffff 0%, #ecebe5 50%, #d8d0c0 51%, #ece9d8 100%);
+              border: 1px solid #000000;
+              border-radius: 1px;
+              font-size: 9px;
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
               color: #000;
               font-weight: bold;
+              box-shadow: 0px 0px 1px rgba(0,0,0,0.3);
           }
           
           .window-button:hover {
-              background: #d4d0c8;
+              background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 50%, #d8d8d8 51%, #f2f2f2 100%);
           }
           
           .window-button:active {
-              border: 1px inset #c0c0c0;
-              background: #b8b8b8;
+              background: linear-gradient(to bottom, #d8d8d8 0%, #e6e6e6 50%, #f2f2f2 51%, #f2f2f2 100%);
+              border: 1px inset #ece9d8;
           }
           
           .window-content {
@@ -1865,7 +1873,7 @@
     
     <div id="ui">
         <div class="title-bar">
-            Three.js glTF Shader Studio v2.0
+            <span>💡 Shader Studio</span>
             <div class="window-buttons">
                 <span class="window-button">_</span>
                 <span class="window-button">□</span>
@@ -2023,7 +2031,7 @@ void main() {
     <!-- glTF Tools Panel -->
     <div id="gltf-ui">
         <div class="title-bar">
-            📦 glTF Model Tools
+            <span>📦 glTF Model Tools</span>
             <div class="window-buttons">
                 <span class="window-button">_</span>
                 <span class="window-button">□</span>
@@ -2188,7 +2196,7 @@ void main() {
             </div>
         </div>
         <div class="status-bar">
-            <span id="gltfStatus">No model loaded</span>
+            <span id="gltfStatus"></span>
         </div>
         
         <!-- Resize Handles -->
@@ -2202,8 +2210,8 @@ void main() {
         <div class="window-titlebar">
             <span class="window-title">📝 Notepad - Shader Studio</span>
             <div class="window-controls">
-                <button class="window-button" onclick="minimizeNotepad()">_</button>
-                <button class="window-button" onclick="closeNotepad()">✕</button>
+                <span class="window-button" onclick="minimizeNotepad()">_</span>
+                <span class="window-button" onclick="closeNotepad()">×</span>
             </div>
         </div>
         <div class="window-content">
@@ -2228,8 +2236,8 @@ void main() {
         <div class="window-titlebar">
             <span class="window-title">⚙️ glTF Optimizer - Shader Studio</span>
             <div class="window-controls">
-                <button class="window-button" onclick="minimizeOptimizer()">_</button>
-                <button class="window-button" onclick="closeOptimizer()">✕</button>
+                <span class="window-button" onclick="minimizeOptimizer()">_</span>
+                <span class="window-button" onclick="closeOptimizer()">×</span>
             </div>
         </div>
         <div class="window-content">
@@ -2314,8 +2322,8 @@ void main() {
         <div class="window-titlebar">
             <span class="window-title">🎨 Shader Browser - Studio Collection</span>
             <div class="window-controls">
-                <button class="window-button" onclick="minimizeShaderBrowser()">_</button>
-                <button class="window-button" onclick="closeShaderBrowser()">✕</button>
+                <span class="window-button" onclick="minimizeShaderBrowser()">_</span>
+                <span class="window-button" onclick="closeShaderBrowser()">×</span>
             </div>
         </div>
         <div class="window-content">
@@ -2361,8 +2369,8 @@ void main() {
         <div class="window-titlebar">
             <span class="window-title">🔍 GLTF Analyzer - Model Inspector</span>
             <div class="window-controls">
-                <button class="window-button" onclick="minimizeAnalyzer()">_</button>
-                <button class="window-button" onclick="closeAnalyzer()">✕</button>
+                <span class="window-button" onclick="minimizeAnalyzer()">_</span>
+                <span class="window-button" onclick="closeAnalyzer()">×</span>
             </div>
         </div>
         <div class="window-content">

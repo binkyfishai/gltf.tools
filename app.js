@@ -314,7 +314,6 @@ function init() {
     fragmentTextarea.addEventListener("input", updateShaders);
     
     updateStatus("Ready - Load a glTF model or edit shaders!");
-    updateGLTFStatus("Ready to load glTF model");
     
     // Initialize UI state
     initializeUI();
@@ -1283,6 +1282,7 @@ function updateStatus(message) {
 }
 
 function updateGLTFStatus(message) {
+    if (message && message.includes("taskbar initialized")) return;
     gltfStatus.textContent = message;
 }
 
@@ -3485,7 +3485,7 @@ function initializeTaskbar() {
     // Setup taskbar interactions
     setupTaskbarEvents();
     
-    updateGLTFStatus("Windows XP taskbar initialized");
+
 }
 
 function updateTaskbarClock() {
