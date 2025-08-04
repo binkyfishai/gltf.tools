@@ -1,23 +1,4 @@
 // Three.js glTF Shader Studio - Enhanced Application
-
-// Check if we're in a browser environment before accessing document or window
-if (typeof document === 'undefined' || typeof window === 'undefined') {
-    console.log('Not in browser environment, exiting initialization');
-} else {
-    // Don't use THREE here yet, wait for initialization
-    setTimeout(() => {
-        // This small delay ensures THREE is globally available
-        if (window.THREE) {
-            console.log("THREE is available, initializing application");
-            initializeApplication();
-        } else {
-            console.error("THREE is not defined, cannot initialize application");
-        }
-    }, 100);
-}
-
-// Wrap the entire application in a function that will be called after loading dependencies
-function initializeApplication() {
 let scene, camera, renderer, material, mesh, clock, controls;
 let isAnimating = true;
 
@@ -46,48 +27,30 @@ let originalModelStats = null;
 let optimizationInProgress = false;
 
 // Shader Browser variables
-let selectedShader = null;
-let filteredShaders = [];
-let currentFilter = '';
+// Using global variables declared earlier
 
 // Start Menu variables
 let startMenuOpen = false;
-let recentFiles = [];
-let bookmarks = [];
-let userSettings = {};
-
-// Try to load settings from localStorage if available
-try {
-  if (typeof localStorage !== 'undefined') {
-    recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
-    bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-    userSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-  }
-} catch (e) {
-  console.warn('Error accessing localStorage:', e);
-}
+let recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+let userSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
 
 // UI Elements - Shader Panel
-let vertexTextarea, fragmentTextarea, statusElement, vertexError, fragmentError;
-try {
-  vertexTextarea = document.getElementById("vertexShader");
-  fragmentTextarea = document.getElementById("fragmentShader");
-  statusElement = document.getElementById("status");
-  vertexError = document.getElementById("vertexError");
-  fragmentError = document.getElementById("fragmentError");
-} catch (e) {
-  console.warn('Error accessing DOM elements:', e);
-}
+const vertexTextarea = document.getElementById("vertexShader");
+const fragmentTextarea = document.getElementById("fragmentShader");
+const statusElement = document.getElementById("status");
+const vertexError = document.getElementById("vertexError");
+const fragmentError = document.getElementById("fragmentError");
 
 // UI Elements - glTF Panel
-let gltfFileInput, modelInfo, gltfStatus;
-try {
-  gltfFileInput = document.getElementById("gltfFileInput");
-  modelInfo = document.getElementById("modelInfo");
-  gltfStatus = document.getElementById("gltfStatus");
-} catch (e) {
-  console.warn('Error accessing glTF DOM elements:', e);
-}
+const gltfFileInput = document.getElementById("gltfFileInput");
+const modelInfo = document.getElementById("modelInfo");
+const gltfStatus = document.getElementById("gltfStatus");
+
+// Shader browser variables
+selectedShader = null;
+filteredShaders = [];
+currentFilter = '';
 
 // Lighting variables
 // Using global variables already declared
@@ -3941,43 +3904,935 @@ function setLightingPreset(preset) {
 }
 
 function resetLighting() {
-    const keySlider = document.getElementById('keyLightIntensity');
-    const fillSlider = document.getElementById('fillLightIntensity');
-    const ambientSlider = document.getElementById('ambientLightIntensity');
-    const shadowsCheckbox = document.getElementById('enableShadows');
-    const reflectionsCheckbox = document.getElementById('enableReflections');
-    const environmentSelect = document.getElementById('environmentSelect');
-    
-    if (keySlider) keySlider.value = 1.2;
-    if (fillSlider) fillSlider.value = 0.6;
-    if (ambientSlider) ambientSlider.value = 0.3;
-    if (shadowsCheckbox) shadowsCheckbox.checked = true;
-    if (reflectionsCheckbox) reflectionsCheckbox.checked = false;
-    if (environmentSelect) environmentSelect.value = 'studio';
-    
-    updateLighting();
-    updateEnvironment();
-    showTaskbarNotification('Lighting reset to defaults', 'success');
+    setLightingPreset('studio');
+    updateStatus("Lighting reset to studio defaults");
 }
 
-// Expose functions needed by HTML to the global scope
-window.toggleShaderBrowser = toggleShaderBrowser;
-window.clearShaders = clearShaders;
-window.resetView = resetView;
-window.applyToSelectedMaterial = applyToSelectedMaterial;
-window.loadExample = loadExample;
-window.toggleNotepad = toggleNotepad;
-window.toggleOptimizer = toggleOptimizer;
-window.loadSampleModel = loadSampleModel;
-window.clearModel = clearModel;
-window.updateShaders = updateShaders;
-window.toggleAnimation = toggleAnimation;
-window.resetTransform = resetTransform;
-window.centerModel = centerModel;
-window.exportModel = exportModel;
-window.exportScreenshot = exportScreenshot;
-window.toggleWireframe = toggleWireframe;
-window.toggleDebugMode = toggleDebugMode;
-window.resetSelectedMaterial = resetSelectedMaterial;
+// ========== GLTF Analyzer Functions ==========
 
-} // End of initializeApplication()
+// Current analyzer state
+let currentAnalyzerTab = 'structure';
+let analyzedModel = null;
+let selectedTreeItem = null;
+let expandedTreeItems = new Set();
+let lastAnalysisReport = null;
+
+// Switch between analyzer tabs
+function switchAnalyzerTab(tab) {
+    // Hide all tab content
+    document.querySelectorAll('#gltf-ui .tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(`analyzer-${tab}`).classList.add('active');
+    
+    // Update active tab button
+    document.querySelectorAll('#gltf-ui .panel-tab').forEach(tabBtn => {
+        tabBtn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    currentAnalyzerTab = tab;
+    
+    // Refresh content for the selected tab if we have a model loaded
+    if (gltfModel) {
+        refreshAnalyzerContent(tab);
+    }
+}
+
+// Main function to analyze a glTF model
+function analyzeGLTFModel(gltf) {
+    if (!gltf) return;
+    
+    analyzedModel = gltf;
+    
+    // Run analysis
+    const analysis = {
+        structure: analyzeStructure(gltf),
+        nodes: analyzeNodes(gltf),
+        materials: analyzeMaterials(gltf),
+        textures: analyzeTextures(gltf),
+        animations: analyzeAnimations(gltf)
+    };
+    
+    // Store analysis result for export
+    lastAnalysisReport = analysis;
+    
+    // Render the current tab
+    refreshAnalyzerContent(currentAnalyzerTab);
+    
+    return analysis;
+}
+
+// Refresh all analyzer content or just the current tab
+function refreshAnalyzer() {
+    if (!gltfModel) {
+        updateGLTFStatus("No model loaded to analyze");
+        return;
+    }
+    
+    analyzeGLTFModel({ scene: gltfModel, animations: animations });
+    updateGLTFStatus("Model analysis refreshed");
+}
+
+// Refresh specific tab content
+function refreshAnalyzerContent(tab) {
+    if (!analyzedModel) return;
+    
+    switch(tab) {
+        case 'structure':
+            renderStructureTree();
+            break;
+        case 'nodes':
+            renderNodesList();
+            break;
+        case 'materials':
+            renderMaterialsList();
+            break;
+        case 'textures':
+            renderTexturesGrid();
+            break;
+        case 'animations':
+            renderAnimationsList();
+            break;
+    }
+}
+
+// Analyze overall structure
+function analyzeStructure(gltf) {
+    const stats = {
+        scenes: 1, // GLTF has at least one scene
+        nodes: 0,
+        meshes: 0,
+        materials: 0,
+        textures: 0,
+        animations: animations.length,
+        vertexCount: 0,
+        triangleCount: 0,
+        primitiveCount: 0,
+        maxTreeDepth: 0
+    };
+    
+    // Function to traverse the scene graph and count nodes
+    function traverseNode(node, depth = 0) {
+        stats.nodes++;
+        stats.maxTreeDepth = Math.max(stats.maxTreeDepth, depth);
+        
+        if (node.isMesh) {
+            stats.meshes++;
+            
+            if (node.geometry) {
+                const position = node.geometry.attributes.position;
+                if (position) {
+                    stats.vertexCount += position.count;
+                    if (node.geometry.index) {
+                        stats.triangleCount += node.geometry.index.count / 3;
+                    } else {
+                        stats.triangleCount += position.count / 3;
+                    }
+                }
+                stats.primitiveCount++;
+            }
+            
+            // Count materials
+            if (node.material) {
+                if (Array.isArray(node.material)) {
+                    stats.materials += node.material.length;
+                    
+                    // Count textures in materials
+                    node.material.forEach(mat => {
+                        if (mat.map) stats.textures++;
+                        if (mat.normalMap) stats.textures++;
+                        if (mat.aoMap) stats.textures++;
+                        if (mat.roughnessMap) stats.textures++;
+                        if (mat.metalnessMap) stats.textures++;
+                        if (mat.emissiveMap) stats.textures++;
+                    });
+                } else {
+                    stats.materials++;
+                    
+                    // Count textures
+                    if (node.material.map) stats.textures++;
+                    if (node.material.normalMap) stats.textures++;
+                    if (node.material.aoMap) stats.textures++;
+                    if (node.material.roughnessMap) stats.textures++;
+                    if (node.material.metalnessMap) stats.textures++;
+                    if (node.material.emissiveMap) stats.textures++;
+                }
+            }
+        }
+        
+        // Traverse children
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                traverseNode(child, depth + 1);
+            });
+        }
+    }
+    
+    if (gltf.scene) {
+        traverseNode(gltf.scene);
+    }
+    
+    // Estimate file size
+    stats.estimatedSize = (stats.vertexCount * 32 + stats.triangleCount * 12 + stats.materials * 1024) / 1024; // KB
+    
+    return stats;
+}
+
+// Analyze nodes hierarchy
+function analyzeNodes(gltf) {
+    const nodes = [];
+    const transforms = [];
+    
+    // Function to traverse and gather node data
+    function traverseNode(node, path = "") {
+        const nodeName = node.name || "Unnamed";
+        const nodePath = path ? `${path} / ${nodeName}` : nodeName;
+        
+        const nodeData = {
+            name: nodeName,
+            path: nodePath,
+            type: node.type,
+            visible: node.visible,
+            position: node.position ? [node.position.x, node.position.y, node.position.z] : null,
+            rotation: node.rotation ? [node.rotation.x, node.rotation.y, node.rotation.z] : null,
+            scale: node.scale ? [node.scale.x, node.scale.y, node.scale.z] : null,
+            isMesh: node.isMesh,
+            isBone: node.isBone,
+            hasChildren: node.children && node.children.length > 0
+        };
+        
+        nodes.push(nodeData);
+        
+        // Collect transform data if not default
+        if (node.position && (node.position.x !== 0 || node.position.y !== 0 || node.position.z !== 0) ||
+            node.rotation && (node.rotation.x !== 0 || node.rotation.y !== 0 || node.rotation.z !== 0) ||
+            node.scale && (node.scale.x !== 1 || node.scale.y !== 1 || node.scale.z !== 1)) {
+            
+            transforms.push({
+                name: nodeName,
+                path: nodePath,
+                position: node.position ? [node.position.x, node.position.y, node.position.z] : [0, 0, 0],
+                rotation: node.rotation ? [
+                    node.rotation.x * (180/Math.PI),
+                    node.rotation.y * (180/Math.PI),
+                    node.rotation.z * (180/Math.PI)
+                ] : [0, 0, 0],
+                scale: node.scale ? [node.scale.x, node.scale.y, node.scale.z] : [1, 1, 1]
+            });
+        }
+        
+        // Traverse children
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                traverseNode(child, nodePath);
+            });
+        }
+    }
+    
+    if (gltf.scene) {
+        traverseNode(gltf.scene);
+    }
+    
+    return {
+        count: nodes.length,
+        nodes: nodes,
+        transforms: transforms
+    };
+}
+
+// Analyze materials
+function analyzeMaterials(gltf) {
+    const materialData = [];
+    
+    modelMaterials.forEach(matInfo => {
+        const mat = matInfo.material;
+        const materialProps = {
+            name: matInfo.name,
+            type: mat.type,
+            transparent: mat.transparent,
+            opacity: mat.opacity,
+            wireframe: mat.wireframe,
+            visible: mat.visible
+        };
+        
+        // Add color properties if they exist
+        if (mat.color) {
+            materialProps.color = `#${mat.color.getHexString()}`;
+        }
+        
+        // Add PBR properties if they exist
+        if (mat.roughness !== undefined) materialProps.roughness = mat.roughness;
+        if (mat.metalness !== undefined) materialProps.metalness = mat.metalness;
+        
+        // Add emissive properties
+        if (mat.emissive) {
+            materialProps.emissive = `#${mat.emissive.getHexString()}`;
+            materialProps.emissiveIntensity = mat.emissiveIntensity;
+        }
+        
+        // Add map references
+        if (mat.map) materialProps.map = 'Base Color';
+        if (mat.normalMap) materialProps.normalMap = 'Normal';
+        if (mat.roughnessMap) materialProps.roughnessMap = 'Roughness';
+        if (mat.metalnessMap) materialProps.metalnessMap = 'Metalness';
+        if (mat.aoMap) materialProps.aoMap = 'Ambient Occlusion';
+        if (mat.emissiveMap) materialProps.emissiveMap = 'Emissive';
+        if (mat.alphaMap) materialProps.alphaMap = 'Alpha';
+        
+        materialData.push(materialProps);
+    });
+    
+    return materialData;
+}
+
+// Analyze textures
+function analyzeTextures(gltf) {
+    const textureData = [];
+    const processedTextures = new Set();
+    
+    // Function to extract texture data
+    function extractTextureData(texture, type) {
+        if (!texture || !texture.image) return null;
+        
+        // Skip if we've already processed this texture
+        const textureId = texture.id;
+        if (processedTextures.has(textureId)) return null;
+        processedTextures.add(textureId);
+        
+        return {
+            id: textureId,
+            name: texture.name || `${type} Map`,
+            type: type,
+            width: texture.image.width || 0,
+            height: texture.image.height || 0,
+            format: getTextureFormat(texture),
+            repeat: [texture.repeat.x, texture.repeat.y],
+            offset: [texture.offset.x, texture.offset.y],
+            rotation: texture.rotation,
+            encoding: getTextureEncoding(texture)
+        };
+    }
+    
+    // Helper to get texture format name
+    function getTextureFormat(texture) {
+        if (!texture) return 'Unknown';
+        
+        // Map THREE.js format constants to names
+        const formatMap = {
+            1022: 'RGB',
+            1023: 'RGBA',
+            1024: 'Luminance',
+            1025: 'Luminance Alpha',
+            1028: 'RGB S3TC DXT1',
+            1029: 'RGBA S3TC DXT1',
+            1030: 'RGBA S3TC DXT3',
+            1031: 'RGBA S3TC DXT5',
+            33776: 'RGB PVRTC 4BPPV1',
+            33777: 'RGB PVRTC 2BPPV1',
+            33778: 'RGBA PVRTC 4BPPV1',
+            33779: 'RGBA PVRTC 2BPPV1',
+            35840: 'RGB ETC1',
+            36196: 'RGB ETC2',
+            36198: 'RGBA ETC2 EAC',
+            37808: 'RGBA ASTC 4x4',
+            37809: 'RGBA ASTC 5x5',
+            37810: 'RGBA ASTC 6x6',
+            37811: 'RGBA ASTC 8x8',
+            37812: 'RGBA ASTC 10x10',
+            37813: 'RGBA ASTC 12x12',
+        };
+        
+        if (texture.format && formatMap[texture.format]) {
+            return formatMap[texture.format];
+        }
+        
+        return 'Unknown';
+    }
+    
+    // Helper to get texture encoding name
+    function getTextureEncoding(texture) {
+        if (!texture) return 'Unknown';
+        
+        // Map THREE.js encoding constants to names
+        const encodingMap = {
+            3000: 'Linear',
+            3001: 'sRGB',
+            3002: 'Gamma',
+            3007: 'RGBE',
+            3200: 'RGBM7',
+            3201: 'RGBM16',
+            3202: 'RGBD',
+            3203: 'LogLuv'
+        };
+        
+        if (texture.encoding && encodingMap[texture.encoding]) {
+            return encodingMap[texture.encoding];
+        }
+        
+        return 'Unknown';
+    }
+    
+    // Traverse all materials to find textures
+    modelMaterials.forEach(matInfo => {
+        const mat = matInfo.material;
+        
+        // Check for various map types
+        const mapData = extractTextureData(mat.map, 'Base Color');
+        if (mapData) textureData.push(mapData);
+        
+        const normalMapData = extractTextureData(mat.normalMap, 'Normal');
+        if (normalMapData) textureData.push(normalMapData);
+        
+        const roughnessMapData = extractTextureData(mat.roughnessMap, 'Roughness');
+        if (roughnessMapData) textureData.push(roughnessMapData);
+        
+        const metalnessMapData = extractTextureData(mat.metalnessMap, 'Metalness');
+        if (metalnessMapData) textureData.push(metalnessMapData);
+        
+        const aoMapData = extractTextureData(mat.aoMap, 'Ambient Occlusion');
+        if (aoMapData) textureData.push(aoMapData);
+        
+        const emissiveMapData = extractTextureData(mat.emissiveMap, 'Emissive');
+        if (emissiveMapData) textureData.push(emissiveMapData);
+        
+        const alphaMapData = extractTextureData(mat.alphaMap, 'Alpha');
+        if (alphaMapData) textureData.push(alphaMapData);
+    });
+    
+    return textureData;
+}
+
+// Analyze animations
+function analyzeAnimations(gltf) {
+    const animationData = [];
+    
+    animations.forEach((anim, index) => {
+        const animInfo = {
+            name: anim.name || `Animation ${index + 1}`,
+            duration: anim.duration,
+            trackCount: anim.tracks.length,
+            tracks: [],
+            keyframeTimes: new Set(),
+            keyframeCount: 0
+        };
+        
+        // Analyze animation tracks
+        anim.tracks.forEach(track => {
+            const trackData = {
+                name: track.name,
+                type: track.ValueTypeName,
+                times: track.times.length,
+                values: track.values.length
+            };
+            
+            // Gather unique keyframe times
+            for (let i = 0; i < track.times.length; i++) {
+                animInfo.keyframeTimes.add(track.times[i]);
+            }
+            
+            animInfo.keyframeCount += track.times.length;
+            animInfo.tracks.push(trackData);
+        });
+        
+        // Convert Set to Array
+        animInfo.keyframeTimes = Array.from(animInfo.keyframeTimes);
+        animInfo.uniqueKeyframes = animInfo.keyframeTimes.length;
+        
+        animationData.push(animInfo);
+    });
+    
+    return animationData;
+}
+
+// Export analysis report as JSON
+function exportAnalysisReport() {
+    if (!lastAnalysisReport) {
+        updateGLTFStatus("No analysis data to export");
+        return;
+    }
+    
+    // Convert analysis to nicely formatted JSON
+    const reportJson = JSON.stringify(lastAnalysisReport, null, 2);
+    const blob = new Blob([reportJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create and trigger download link
+    const link = document.createElement('a');
+    link.href = url;
+    const filename = gltfModel.name ? `${gltfModel.name}_analysis.json` : 'gltf_analysis.json';
+    link.download = filename;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    
+    updateGLTFStatus("Analysis report exported");
+    showTaskbarNotification("Analysis report saved to downloads", 'success');
+}
+
+// Run performance benchmark on the model
+function analyzeBenchmark() {
+    if (!gltfModel) {
+        updateGLTFStatus("No model loaded to benchmark");
+        return;
+    }
+    
+    updateGLTFStatus("Running performance benchmark...");
+    
+    const metrics = {
+        renderTime: 0,
+        frameRate: 0,
+        triangleCount: 0,
+        drawCalls: 0,
+        memoryUsage: 0
+    };
+    
+    // Count triangles
+    gltfModel.traverse(obj => {
+        if (obj.isMesh && obj.geometry) {
+            const geom = obj.geometry;
+            if (geom.index) {
+                metrics.triangleCount += geom.index.count / 3;
+            } else if (geom.attributes && geom.attributes.position) {
+                metrics.triangleCount += geom.attributes.position.count / 3;
+            }
+        }
+    });
+    
+    // Renderer stats are not directly accessible in vanilla Three.js
+    // Estimate draw calls based on material count
+    metrics.drawCalls = modelMaterials.length;
+    
+    // Measure render time
+    const startTime = performance.now();
+    let frames = 0;
+    
+    function benchmarkRender() {
+        renderer.render(scene, camera);
+        frames++;
+        
+        if (performance.now() - startTime < 1000) {
+            requestAnimationFrame(benchmarkRender);
+        } else {
+            const endTime = performance.now();
+            metrics.renderTime = (endTime - startTime) / frames;
+            metrics.frameRate = 1000 / metrics.renderTime;
+            
+            // Try to estimate memory usage (not exact)
+            try {
+                if (window.performance && window.performance.memory) {
+                    metrics.memoryUsage = window.performance.memory.usedJSHeapSize / (1024 * 1024);
+                }
+            } catch (e) {
+                metrics.memoryUsage = "Not available";
+            }
+            
+            // Display results
+            const resultsHtml = `
+                <div class="analyzer-section">
+                    <h4>Performance Benchmark</h4>
+                    <div class="analyzer-list">
+                        <div class="analyzer-item">
+                            <div class="analyzer-property">
+                                <span class="analyzer-property-name">Render Time:</span>
+                                <span class="analyzer-property-value">${metrics.renderTime.toFixed(2)} ms/frame</span>
+                            </div>
+                            <div class="analyzer-property">
+                                <span class="analyzer-property-name">Frame Rate:</span>
+                                <span class="analyzer-property-value">${metrics.frameRate.toFixed(1)} FPS</span>
+                            </div>
+                            <div class="analyzer-property">
+                                <span class="analyzer-property-name">Triangle Count:</span>
+                                <span class="analyzer-property-value">${Math.round(metrics.triangleCount).toLocaleString()}</span>
+                            </div>
+                            <div class="analyzer-property">
+                                <span class="analyzer-property-name">Est. Draw Calls:</span>
+                                <span class="analyzer-property-value">${metrics.drawCalls}</span>
+                            </div>
+                            <div class="analyzer-property">
+                                <span class="analyzer-property-name">Memory Usage:</span>
+                                <span class="analyzer-property-value">${typeof metrics.memoryUsage === 'number' ? metrics.memoryUsage.toFixed(1) + ' MB' : metrics.memoryUsage}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insert at the top of the analyzer tabs
+            const analyzerStructure = document.getElementById('analyzer-structure');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = resultsHtml;
+            const resultElement = tempDiv.firstElementChild;
+            
+            analyzerStructure.insertBefore(resultElement, analyzerStructure.firstChild);
+            
+            // Remove after 30 seconds
+            setTimeout(() => {
+                if (resultElement && resultElement.parentNode) {
+                    resultElement.parentNode.removeChild(resultElement);
+                }
+            }, 30000);
+            
+            updateGLTFStatus("Benchmark complete: " + metrics.frameRate.toFixed(1) + " FPS");
+            showTaskbarNotification("Performance benchmark completed", 'info');
+        }
+    }
+    
+    requestAnimationFrame(benchmarkRender);
+}
+
+// Render tree structure
+function renderStructureTree() {
+    const treeElement = document.getElementById('analyzer-tree');
+    
+    if (!analyzedModel || !treeElement) {
+        return;
+    }
+    
+    // Get the structure data
+    const structure = analyzeStructure(analyzedModel);
+    
+    // Create tree HTML
+    let treeHtml = '';
+    
+    // Summary section
+    treeHtml += `
+        <div class="tree-item">
+            <div class="tree-item-icon">📊</div>
+            <strong>Model Overview</strong>
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Scenes: ${structure.scenes}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Nodes: ${structure.nodes}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Meshes: ${structure.meshes}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Materials: ${structure.materials}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Textures: ${structure.textures}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Animations: ${structure.animations}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Vertices: ${structure.vertexCount.toLocaleString()}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Triangles: ${Math.round(structure.triangleCount).toLocaleString()}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Primitives: ${structure.primitiveCount}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Tree Depth: ${structure.maxTreeDepth}
+        </div>
+        <div class="tree-item" style="padding-left: 20px;">
+            <div class="tree-indent"></div>
+            Est. Size: ${structure.estimatedSize.toFixed(1)} KB
+        </div>
+    `;
+    
+    treeElement.innerHTML = treeHtml;
+}
+
+// Render nodes list
+function renderNodesList() {
+    const nodesElement = document.getElementById('analyzer-nodes-list');
+    
+    if (!analyzedModel || !nodesElement) {
+        return;
+    }
+    
+    // Get the nodes data
+    const nodesData = analyzeNodes(analyzedModel);
+    
+    // Create HTML for nodes list
+    let nodesHtml = '';
+    
+    // Function to recursively create node tree
+    function createNodeTree(node, scene, level = 0) {
+        const indent = '  '.repeat(level);
+        const nodeType = node.isMesh ? '📦 ' : (node.isBone ? '🦴 ' : '📁 ');
+        const name = node.name || "Unnamed Node";
+        
+        nodesHtml += `
+            <div class="analyzer-item" data-node="${name}">
+                <div style="margin-left: ${level * 16}px;">
+                    ${nodeType}${name}
+                </div>
+            </div>
+        `;
+        
+        // Process children
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                createNodeTree(child, scene, level + 1);
+            });
+        }
+    }
+    
+    if (analyzedModel.scene) {
+        nodesHtml = `<div class="analyzer-item" style="font-weight:bold;">Scene</div>`;
+        createNodeTree(analyzedModel.scene, analyzedModel.scene, 1);
+    }
+    
+    nodesElement.innerHTML = nodesHtml;
+    
+    // Add click event listeners
+    const nodeItems = nodesElement.querySelectorAll('.analyzer-item');
+    nodeItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove existing selection
+            nodeItems.forEach(i => i.classList.remove('selected'));
+            // Add selection to clicked item
+            item.classList.add('selected');
+        });
+    });
+}
+
+// Render materials list
+function renderMaterialsList() {
+    const materialsElement = document.getElementById('analyzer-materials-list');
+    
+    if (!analyzedModel || !materialsElement) {
+        return;
+    }
+    
+    // Get the materials data
+    const materialsData = analyzeMaterials(analyzedModel);
+    
+    // Create HTML for materials list
+    let materialsHtml = '';
+    
+    materialsData.forEach((material, index) => {
+        let colorPreview = '';
+        if (material.color) {
+            colorPreview = `<div style="display:inline-block; width:12px; height:12px; background:${material.color}; border:1px solid #999; margin-right:5px;"></div>`;
+        }
+        
+        materialsHtml += `
+            <div class="analyzer-item" data-material="${index}">
+                <div style="font-weight:bold; margin-bottom:3px;">
+                    ${colorPreview}${material.name}
+                </div>
+                <div class="analyzer-property">
+                    <span class="analyzer-property-name">Type:</span>
+                    <span class="analyzer-property-value">${material.type}</span>
+                </div>
+        `;
+        
+        // Add material properties
+        if (material.color) {
+            materialsHtml += `
+                <div class="analyzer-property">
+                    <span class="analyzer-property-name">Color:</span>
+                    <span class="analyzer-property-value">${material.color}</span>
+                </div>
+            `;
+        }
+        
+        if (material.roughness !== undefined) {
+            materialsHtml += `
+                <div class="analyzer-property">
+                    <span class="analyzer-property-name">Roughness:</span>
+                    <span class="analyzer-property-value">${material.roughness.toFixed(2)}</span>
+                </div>
+            `;
+        }
+        
+        if (material.metalness !== undefined) {
+            materialsHtml += `
+                <div class="analyzer-property">
+                    <span class="analyzer-property-name">Metalness:</span>
+                    <span class="analyzer-property-value">${material.metalness.toFixed(2)}</span>
+                </div>
+            `;
+        }
+        
+        if (material.transparent) {
+            materialsHtml += `
+                <div class="analyzer-property">
+                    <span class="analyzer-property-name">Opacity:</span>
+                    <span class="analyzer-property-value">${material.opacity.toFixed(2)}</span>
+                </div>
+            `;
+        }
+        
+        // Add texture maps
+        const maps = [
+            { key: 'map', label: 'Base Color Map' },
+            { key: 'normalMap', label: 'Normal Map' },
+            { key: 'roughnessMap', label: 'Roughness Map' },
+            { key: 'metalnessMap', label: 'Metalness Map' },
+            { key: 'aoMap', label: 'AO Map' },
+            { key: 'emissiveMap', label: 'Emissive Map' },
+            { key: 'alphaMap', label: 'Alpha Map' }
+        ];
+        
+        const hasMaps = maps.some(mapInfo => material[mapInfo.key]);
+        
+        if (hasMaps) {
+            materialsHtml += `<div style="font-weight:bold; margin:3px 0;">Texture Maps:</div>`;
+            
+            maps.forEach(mapInfo => {
+                if (material[mapInfo.key]) {
+                    materialsHtml += `
+                        <div class="analyzer-property">
+                            <span class="analyzer-property-name">• ${mapInfo.label}</span>
+                            <span class="analyzer-property-value">✓</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        materialsHtml += `</div>`;
+    });
+    
+    if (materialsHtml === '') {
+        materialsHtml = '<div class="tree-loader">No material data available</div>';
+    }
+    
+    materialsElement.innerHTML = materialsHtml;
+    
+    // Add click event listeners
+    const materialItems = materialsElement.querySelectorAll('.analyzer-item');
+    materialItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove existing selection
+            materialItems.forEach(i => i.classList.remove('selected'));
+            // Add selection to clicked item
+            item.classList.add('selected');
+            
+            // Select the corresponding material in the Materials list
+            const matIndex = parseInt(item.dataset.material);
+            if (!isNaN(matIndex) && matIndex >= 0 && matIndex < modelMaterials.length) {
+                selectMaterial(matIndex);
+            }
+        });
+    });
+}
+
+// Render textures grid
+function renderTexturesGrid() {
+    const texturesElement = document.getElementById('analyzer-textures-grid');
+    
+    if (!analyzedModel || !texturesElement) {
+        return;
+    }
+    
+    // Get the textures data
+    const texturesData = analyzeTextures(analyzedModel);
+    
+    // Create HTML for textures grid
+    let texturesHtml = '';
+    
+    if (texturesData.length > 0) {
+        texturesData.forEach(texture => {
+            // Create thumbnail from texture if possible (not fully implemented as we can't easily
+            // access raw texture data in Three.js without special handling)
+            texturesHtml += `
+                <div class="texture-thumbnail" style="background-color: #f0f0f0;">
+                    <div style="text-align:center; padding-top:30px; color:#666;">
+                        ${texture.type}
+                    </div>
+                    <div class="texture-label">
+                        ${texture.width}x${texture.height} 
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        texturesHtml = '<div class="tree-loader" style="grid-column: 1 / -1;">No texture data available</div>';
+    }
+    
+    texturesElement.innerHTML = texturesHtml;
+}
+
+// Render animations list
+function renderAnimationsList() {
+    const animationsElement = document.getElementById('analyzer-animations-list');
+    
+    if (!analyzedModel || !animationsElement) {
+        return;
+    }
+    
+    // Get the animations data
+    const animationsData = analyzeAnimations(analyzedModel);
+    
+    // Create HTML for animations list
+    let animationsHtml = '';
+    
+    if (animationsData.length > 0) {
+        animationsData.forEach((animation, index) => {
+            animationsHtml += `
+                <div class="analyzer-item" data-animation="${index}">
+                    <div style="font-weight:bold; margin-bottom:3px;">
+                        🎬 ${animation.name}
+                    </div>
+                    <div class="analyzer-property">
+                        <span class="analyzer-property-name">Duration:</span>
+                        <span class="analyzer-property-value">${animation.duration.toFixed(2)}s</span>
+                    </div>
+                    <div class="analyzer-property">
+                        <span class="analyzer-property-name">Tracks:</span>
+                        <span class="analyzer-property-value">${animation.trackCount}</span>
+                    </div>
+                    <div class="analyzer-property">
+                        <span class="analyzer-property-name">Keyframes:</span>
+                        <span class="analyzer-property-value">${animation.keyframeCount} (${animation.uniqueKeyframes} unique)</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        animationsHtml = '<div class="tree-loader">No animation data available</div>';
+    }
+    
+    animationsElement.innerHTML = animationsHtml;
+    
+    // Add click event listeners
+    const animationItems = animationsElement.querySelectorAll('.analyzer-item');
+    animationItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove existing selection
+            animationItems.forEach(i => i.classList.remove('selected'));
+            // Add selection to clicked item
+            item.classList.add('selected');
+            
+            // Play the animation
+            const animIndex = parseInt(item.dataset.animation);
+            if (!isNaN(animIndex) && animIndex >= 0 && animIndex < animations.length) {
+                playAnimation(animIndex);
+            }
+        });
+    });
+}
+
+// Hook the analyzer into the glTF loading process
+const originalLoadGLTFModel = loadGLTFModel;
+
+loadGLTFModel = function(gltf, file = null) {
+    // Call the original function first
+    originalLoadGLTFModel.call(this, gltf, file);
+    
+    // Then analyze the model
+    analyzeGLTFModel(gltf);
+};
