@@ -1444,23 +1444,34 @@
               background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="10" fill="none" stroke="%23000000" stroke-width="1.5"/><rect x="4" y="4" width="3" height="2" fill="%23000000"/><rect x="9" y="4" width="3" height="2" fill="%23000000"/><rect x="4" y="8" width="3" height="2" fill="%23000000"/><rect x="9" y="8" width="3" height="2" fill="%23000000"/><circle cx="14" cy="14" r="1" fill="%23000000"/></svg>') center/contain no-repeat;
           }
           
+          .analyzer-icon {
+              background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="6" cy="6" r="5" fill="none" stroke="%23000000" stroke-width="1.5"/><path d="M10 10l5 5" stroke="%23000000" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="6" r="2" fill="none" stroke="%23000000"/><path d="M3 3l6 6M3 9l6-6" stroke="%23000000" stroke-width="0.8"/></svg>') center/contain no-repeat;
+          }
+          
           /* Window positioning */
-          #notepad-window {
-              top: 50px;
-              left: 100px;
-          }
-          
-          #optimizer-window {
-              top: 80px;
-              left: 150px;
-          }
-          
-          #shaderbrowser-window {
-              top: 60px;
-              left: 200px;
-              width: 600px;
-              height: 500px;
-          }
+        #notepad-window {
+            top: 50px;
+            left: 100px;
+        }
+        
+        #optimizer-window {
+            top: 80px;
+            left: 150px;
+        }
+        
+        #shaderbrowser-window {
+            top: 60px;
+            left: 200px;
+            width: 600px;
+            height: 500px;
+        }
+        
+        #analyzer-window {
+            top: 100px;
+            left: 250px;
+            width: 600px;
+            height: 500px;
+        }
           
           /* Optimizer Layout for Windows */
           .optimizer-layout {
@@ -2084,7 +2095,6 @@ void main() {
                 </div>
             </div>
             
-
             <!-- GLTF Analyzer -->
             <div class="section">
                 <div class="section-title collapsible" onclick="toggleSection(this)">🔍 GLTF Analyzer</div>
@@ -2328,6 +2338,81 @@ void main() {
         </div>
     </div>
     
+    <!-- GLTF Analyzer Window -->
+    <div id="analyzer-window" class="app-window" style="display: none; width: 600px; height: 500px;">
+        <div class="window-titlebar">
+            <span class="window-title">🔍 GLTF Analyzer - Model Inspector</span>
+            <div class="window-controls">
+                <button class="window-button" onclick="minimizeAnalyzer()">_</button>
+                <button class="window-button" onclick="closeAnalyzer()">✕</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="info-box">
+                <strong>GLTF Inspector:</strong> Detailed analysis of your loaded model's structure, components, and properties.
+            </div>
+            
+            <div class="panel-tabs">
+                <div class="panel-tab active" onclick="switchAnalyzerTab('structure')">Structure</div>
+                <div class="panel-tab" onclick="switchAnalyzerTab('nodes')">Nodes</div>
+                <div class="panel-tab" onclick="switchAnalyzerTab('materials')">Materials</div>
+                <div class="panel-tab" onclick="switchAnalyzerTab('textures')">Textures</div>
+                <div class="panel-tab" onclick="switchAnalyzerTab('animations')">Animations</div>
+            </div>
+            
+            <div id="analyzer-structure" class="tab-content active">
+                <div class="analyzer-section">
+                    <h4>Model Structure</h4>
+                    <div id="analyzer-tree" class="windows-tree">
+                        <div class="tree-loader">Load a model to analyze structure</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="analyzer-nodes" class="tab-content">
+                <div class="analyzer-section">
+                    <h4>Node Hierarchy</h4>
+                    <div id="analyzer-nodes-list" class="analyzer-list">
+                        <div class="tree-loader">Load a model to analyze nodes</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="analyzer-materials" class="tab-content">
+                <div class="analyzer-section">
+                    <h4>Material Properties</h4>
+                    <div id="analyzer-materials-list" class="analyzer-list">
+                        <div class="tree-loader">Load a model to analyze materials</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="analyzer-textures" class="tab-content">
+                <div class="analyzer-section">
+                    <h4>Texture Maps</h4>
+                    <div id="analyzer-textures-grid" class="analyzer-grid">
+                        <div class="tree-loader">Load a model to analyze textures</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="analyzer-animations" class="tab-content">
+                <div class="analyzer-section">
+                    <h4>Animation Data</h4>
+                    <div id="analyzer-animations-list" class="analyzer-list">
+                        <div class="tree-loader">Load a model to analyze animations</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="small-button" onclick="refreshAnalyzer()">🔄 Refresh</button>
+                <button class="small-button" onclick="exportAnalysisReport()">📋 Export Report</button>
+                <button class="small-button" onclick="analyzeBenchmark()">📊 Performance</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Windows XP Start Menu -->
     <div id="startMenu" class="start-menu" style="display: none;">
         <div class="start-menu-left">
@@ -2449,6 +2534,10 @@ void main() {
             <div class="app-button" id="shaderbrowser-taskbar-btn" onclick="toggleShaderBrowser()">
                 <div class="app-icon shaderbrowser-icon"></div>
                 <span>Shader Browser</span>
+            </div>
+            <div class="app-button" id="analyzer-taskbar-btn" onclick="toggleAnalyzer()">
+                <div class="app-icon analyzer-icon"></div>
+                <span>GLTF Analyzer</span>
             </div>
         </div>
         

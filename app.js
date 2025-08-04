@@ -2166,6 +2166,7 @@ function setupAppWindows() {
     makeWindowDraggable(document.getElementById('notepad-window'));
     makeWindowDraggable(document.getElementById('optimizer-window'));
     makeWindowDraggable(document.getElementById('shaderbrowser-window'));
+    makeWindowDraggable(document.getElementById('analyzer-window'));
     
     // Set initial window z-indexes
     let windowZIndex = 1000;
@@ -2180,6 +2181,10 @@ function setupAppWindows() {
     });
     
     document.getElementById('shaderbrowser-window').addEventListener('mousedown', function() {
+        this.style.zIndex = ++windowZIndex;
+    });
+    
+    document.getElementById('analyzer-window').addEventListener('mousedown', function() {
         this.style.zIndex = ++windowZIndex;
     });
     
@@ -4975,3 +4980,43 @@ loadGLTFModel = function(gltf, file = null) {
     // Then analyze the model
     analyzeGLTFModel(gltf);
 };
+
+// GLTF Analyzer window functionality
+let analyzerOpen = false;
+
+function toggleAnalyzer() {
+    const window = document.getElementById('analyzer-window');
+    const taskbarBtn = document.getElementById('analyzer-taskbar-btn');
+    
+    if (analyzerOpen) {
+        window.style.display = 'none';
+        taskbarBtn.classList.remove('active');
+        analyzerOpen = false;
+        updateStatus("GLTF Analyzer closed");
+    } else {
+        window.style.display = 'block';
+        taskbarBtn.classList.add('active');
+        analyzerOpen = true;
+        updateStatus("GLTF Analyzer opened");
+        showTaskbarNotification("GLTF Analyzer opened", 'info');
+        
+        // Refresh analyzer if we have a model loaded
+        if (gltfModel) {
+            refreshAnalyzer();
+        }
+    }
+}
+
+function minimizeAnalyzer() {
+    const window = document.getElementById('analyzer-window');
+    const taskbarBtn = document.getElementById('analyzer-taskbar-btn');
+    
+    window.style.display = 'none';
+    taskbarBtn.classList.remove('active');
+    analyzerOpen = false;
+    updateStatus("GLTF Analyzer minimized");
+}
+
+function closeAnalyzer() {
+    minimizeAnalyzer();
+}
